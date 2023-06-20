@@ -1,7 +1,7 @@
 {
   "name": "statsig-node-lite",
-  "version": "5.7.2",
-  "description": "A lite version of the Statsig Node.js SDK.",
+  "version": "0.0.2",
+  "description": "A slimmed version of the Statsig Node.js SDK.",
   "main": "dist/index.js",
   "scripts": {
     "prepare": "rm -rf dist/ && tsc",
@@ -17,12 +17,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/statsig-io/node-js-server-sdk.git"
+    "url": "git+https://github.com/statsig-io/node-js-lite-server-sdk.git"
   },
   "author": "Statsig, Inc.",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/statsig-io/node-js-server-sdk/issues"
+    "url": "https://github.com/statsig-io/node-js-lite-server-sdk/issues"
   },
   "homepage": "https://www.statsig.com",
   "dependencies": {
