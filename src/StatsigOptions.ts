@@ -41,7 +41,6 @@ export type ExplicitStatsigOptions = {
   loggingIntervalMs: number;
   loggingMaxBufferSize: number;
   disableDiagnostics: boolean;
-  initStrategyForIP3Country: InitStrategy;
   initStrategyForIDLists: InitStrategy;
   postLogsRetryLimit: number;
   postLogsRetryBackoff: RetryBackoffFunc | number;
@@ -95,12 +94,6 @@ export function OptionsWithDefaults(
       'disableDiagnostics',
       DEFAULT_LOG_DIAGNOSTICS,
     ),
-    initStrategyForIP3Country:
-      (getString(
-        opts,
-        'initStrategyForIP3Country',
-        'await',
-      ) as InitStrategy | null) ?? 'await',
     initStrategyForIDLists:
       (getString(
         opts,

@@ -100,7 +100,6 @@ describe('InitStrategy', () => {
     await Statsig.initialize('secret-key', {
       loggingMaxBufferSize: 1,
       initStrategyForIDLists: 'await',
-      initStrategyForIP3Country: 'await',
     });
 
     Statsig.shutdown();
@@ -166,7 +165,6 @@ describe('InitStrategy', () => {
     await Statsig.initialize('secret-key', {
       loggingMaxBufferSize: 1,
       initStrategyForIDLists: 'none',
-      initStrategyForIP3Country: 'none',
     });
 
     Statsig.shutdown();
@@ -203,7 +201,6 @@ describe('InitStrategy', () => {
     await Statsig.initialize('secret-key', {
       loggingMaxBufferSize: 1,
       initStrategyForIDLists: 'lazy',
-      initStrategyForIP3Country: 'lazy',
     });
 
     Statsig.flush();

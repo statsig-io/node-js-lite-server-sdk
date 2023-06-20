@@ -2,7 +2,7 @@
  * This module contains types and interfaces
  * to allow for customizations of SDK features.
  */
-declare module 'statsig-node/interfaces' {
+declare module 'statsig-node-lite/interfaces' {
   export type AdapterResponse = {
     result?: string;
     time?: number;

@@ -61,6 +61,6 @@ describe('Verify behavior of core utility functions', () => {
       metadata.sdkVersion,
     );
     expect(process.version).toEqual('v' + metadata.languageVersion);
-    expect('statsig-node').toEqual(metadata.sdkType);
+    expect('statsig-node-lite').toEqual(metadata.sdkType);
   });
 });

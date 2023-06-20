@@ -57,20 +57,6 @@ describe('Test condition evaluation', () => {
     ['pass_gate', null, 'gate_server', null, user, false, undefined, true],
     ['fail_gate', null, 'gate_server', null, user, false, undefined, true],
 
-    // ip_based condition when ip is not provided
-    ['ip_based', 'any', ['US', 'CA'], 'country', user, true],
-    ['ip_based', 'none', ['US', 'CA'], 'country', user, false],
-    ['ip_based', 'eq', 'US', 'country', user, true],
-    ['ip_based', 'neq', 'US', 'country', user, false],
-    ['ip_based', 'any', ['US', 'CA'], 'city', user, false],
-
-    // ip_based condition when ip is provided
-    ['ip_based', 'any', ['US', 'CA'], 'country', user2, true],
-    ['ip_based', 'none', ['US', 'CA'], 'country', user2, false],
-    ['ip_based', 'eq', 'US', 'country', user2, true],
-    ['ip_based', 'neq', 'US', 'country', user2, false],
-    ['ip_based', 'any', ['US', 'CA'], 'city', user2, false],
-
     // ua_based condition when ua is not provided
     ['ua_based', 'any', ['Android', 'iOS'], 'os_name', user, true],
     ['ua_based', 'none', ['Android', 'iOS'], 'os_name', user, false],
@@ -261,7 +247,6 @@ describe('Test condition evaluation', () => {
 
       return new ConfigEvaluation(false, 'default');
     });
-  jest.spyOn(mockedEvaluator, 'ip2country').mockImplementation((ip) => 'US');
 
   const gateSpec = new ConfigSpec(exampleConfigSpecs.gate);
   const halfPassGateSpec = new ConfigSpec(exampleConfigSpecs.half_pass_gate);
@@ -637,13 +622,5 @@ describe('testing checkGate and getConfig', () => {
         expect(layer.rule_id).toEqual('default');
       });
     });
-  });
-
-  test('ip2country() behavior', async () => {
-    expect(evaluator.ip2country('1.0.0.255')).toEqual(null);
-    await evaluator.init();
-    expect(evaluator.ip2country('1.0.0.255')).toEqual('US');
-    expect(evaluator.ip2country(16777471)).toEqual('US');
-    expect(evaluator.ip2country({})).toEqual(null);
   });
 });

@@ -1,7 +1,7 @@
 {
-  "name": "statsig-node",
+  "name": "statsig-node-lite",
   "version": "5.7.2",
-  "description": "Statsig Node.js SDK for usage in multi-user server environments.",
+  "description": "A lite version of the Statsig Node.js SDK.",
   "main": "dist/index.js",
   "scripts": {
     "prepare": "rm -rf dist/ && tsc",
@@ -26,7 +26,6 @@
   },
   "homepage": "https://www.statsig.com",
   "dependencies": {
-    "ip3country": "^5.0.0",
     "sha.js": "^2.4.11",
     "node-fetch": "^2.6.7",
     "ua-parser-js": "^1.0.2",

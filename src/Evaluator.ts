@@ -10,7 +10,6 @@ import parseUserAgent from './utils/parseUserAgent';
 import StatsigFetcher from './utils/StatsigFetcher';
 
 const shajs = require('sha.js');
-const ip3country = require('ip3country');
 
 const CONDITION_SEGMENT_COUNT = 10 * 1000;
 const USER_BUCKET_COUNT = 1000;
@@ -44,15 +43,12 @@ export default class Evaluator {
 
   private store: SpecStore;
 
-  private initStrategyForIP3Country: InitStrategy;
-
   public constructor(
     fetcher: StatsigFetcher,
     options: ExplicitStatsigOptions,
     diagnostics: Diagnostics,
   ) {
     this.store = new SpecStore(fetcher, options, diagnostics);
-    this.initStrategyForIP3Country = options.initStrategyForIP3Country;
     this.gateOverrides = {};
     this.configOverrides = {};
     this.layerOverrides = {};
@@ -60,17 +56,6 @@ export default class Evaluator {
 
   public async init(): Promise<void> {
     await this.store.init();
-    try {
-      if (this.initStrategyForIP3Country === 'lazy') {
-        setTimeout(async () => {
-          await ip3country.init();
-        }, 0);
-      } else if (this.initStrategyForIP3Country !== 'none') {
-        await ip3country.init();
-      }
-    } catch (err) {
-      // Ignore: this is optional
-    }
     this.initialized = true;
   }
 
@@ -270,7 +255,7 @@ export default class Evaluator {
       ),
       sdkParams: {},
       has_updates: true,
-      generator: 'statsig-node-sdk',
+      generator: 'statsig-node-lite-sdk',
       time: 0, // set the time to 0 so this doesnt interfere with polling,
       evaluated_keys: evaluatedKeys,
     };
@@ -600,7 +585,7 @@ export default class Evaluator {
         };
       case 'ip_based':
         // this would apply to things like 'country', 'region', etc.
-        value = getFromUser(user, field) ?? this.getFromIP(user, field);
+        value = getFromUser(user, field);
         break;
       case 'ua_based':
         // this would apply to things like 'os', 'browser', etc.
@@ -818,30 +803,6 @@ export default class Evaluator {
     }
     const evalResult = this._eval(user, experimentConfig);
     return evalResult.is_experiment_group;
-  }
-
-  private getFromIP(user: StatsigUser, field: string) {
-    const ip = getFromUser(user, 'ip');
-    if (ip == null || field !== 'country') {
-      return null;
-    }
-    return this.ip2country(ip);
-  }
-
-  public ip2country(ip: string | number): string | null {
-    if (!this.initialized) {
-      return null;
-    }
-    try {
-      if (typeof ip === 'string') {
-        return ip3country.lookupStr(ip);
-      } else if (typeof ip === 'number') {
-        return ip3country.lookupNumeric(ip);
-      }
-    } catch (e) {
-      // TODO: log
-    }
-    return null;
   }
 }
 

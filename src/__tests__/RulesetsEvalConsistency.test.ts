@@ -34,11 +34,18 @@ describe('RulesetsEvalConsistency', () => {
     });
     const testData = (await response.json()).data;
 
-    const {
+    let {
       feature_gates_v2: gates,
       dynamic_configs: configs,
       layer_configs: layers,
     } = testData[0];
+
+    const gatesToSkip = ['test_country', 'test_many_rules'];
+    gates = Object.fromEntries(
+      Object.entries(gates).filter(
+         ([name, _]) => !gatesToSkip.includes(name)
+      )
+    );
 
     const totalChecks =
       testData.length *
@@ -59,6 +66,9 @@ describe('RulesetsEvalConsistency', () => {
       const layers = data.layer_configs;
 
       for (const name in gates) {
+        if (gatesToSkip.includes(name)) {
+          continue;
+        }
         const sdkResult = evaluator.checkGate(user, name);
         const serverResult = gates[name];
 

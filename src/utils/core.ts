@@ -11,9 +11,9 @@ function getSDKVersion(): string {
 
 function getSDKType(): string {
   try {
-    return require('../../package.json')?.name ?? 'statsig-node';
+    return require('../../package.json')?.name ?? 'statsig-node-lite';
   } catch (err) {
-    return 'statsig-node';
+    return 'statsig-node-lite';
   }
 }
 
