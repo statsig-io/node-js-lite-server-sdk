@@ -57,7 +57,8 @@ export default class SpecStore {
   private fetcher: StatsigFetcher;
   private dataAdapter: IDataAdapter | null;
   private syncFailureCount: number = 0;
-  private lastDownloadConfigSpecsSyncTime: number = Date.now();
+  private syncTimerLastActiveTime: number = Date.now();
+  private idListsSyncTimerLastActiveTime: number = Date.now();
   private diagnostics: Diagnostics;
   private bootstrapValues: string | null;
   private initStrategyForIDLists: InitStrategy;
@@ -213,18 +214,31 @@ export default class SpecStore {
   }
 
   public resetSyncTimerIfExited(): Error | null {
-    if (
-      this.lastDownloadConfigSpecsSyncTime >=
-      Date.now() - SYNC_OUTDATED_MAX
-    ) {
+    const syncTimerInactive =
+      this.syncTimerLastActiveTime <
+      Date.now() - Math.max(SYNC_OUTDATED_MAX, this.syncInterval);
+    const idListsSyncTimerInactive =
+      this.idListsSyncTimerLastActiveTime <
+      Date.now() - Math.max(SYNC_OUTDATED_MAX, this.idListSyncInterval);
+    if (!syncTimerInactive && !idListsSyncTimerInactive) {
       return null;
     }
-    this.clearTimers();
+    let message = '';
+    if (syncTimerInactive) {
+      this.clearSyncTimer();
+      this._syncValues();
+      message = message.concat(`Force reset sync timer. Last update time: ${
+        this.syncTimerLastActiveTime
+      }, now: ${Date.now()}`);
+    }
+    if (idListsSyncTimerInactive) {
+      this.clearIdListsSyncTimer();
+      this._syncIdLists();
+      message = message.concat(`Force reset id list sync timer. Last update time: ${
+        this.idListsSyncTimerLastActiveTime
+      }, now: ${Date.now()}`);
+    }
     this.pollForUpdates();
-    const message = `Force reset sync timer. Last update time: ${
-      this.lastDownloadConfigSpecsSyncTime
-    }, now: ${Date.now()}`;
-    this._fetchConfigSpecsFromServer();
     return new Error(message);
   }
 
@@ -243,7 +257,6 @@ export default class SpecStore {
   }
 
   private async _fetchConfigSpecsFromServer(): Promise<void> {
-    this.lastDownloadConfigSpecsSyncTime = Date.now();
     this.addDiagnosticsMarker('download_config_specs', 'start', {
       step: 'network_request',
     });
@@ -325,12 +338,14 @@ export default class SpecStore {
   private pollForUpdates() {
     if (this.syncTimer == null) {
       this.syncTimer = poll(async () => {
+        this.syncTimerLastActiveTime = Date.now();
         await this._syncValues();
       }, this.syncInterval);
     }
 
     if (this.idListsSyncTimer == null) {
       this.idListsSyncTimer = poll(async () => {
+        this.idListsSyncTimerLastActiveTime = Date.now();
         await this._syncIdLists();
       }, this.idListSyncInterval);
     }
@@ -712,15 +727,19 @@ export default class SpecStore {
   }
 
   public shutdown(): void {
-    this.clearTimers();
+    this.clearSyncTimer();
+    this.clearIdListsSyncTimer();
     this.dataAdapter?.shutdown();
   }
 
-  private clearTimers(): void {
+  private clearSyncTimer(): void {
     if (this.syncTimer != null) {
       clearInterval(this.syncTimer);
       this.syncTimer = null;
     }
+  }
+
+  private clearIdListsSyncTimer(): void {
     if (this.idListsSyncTimer != null) {
       clearInterval(this.idListsSyncTimer);
       this.idListsSyncTimer = null;
