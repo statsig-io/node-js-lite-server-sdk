@@ -265,6 +265,11 @@ export default class Evaluator {
     return this.store.resetSyncTimerIfExited();
   }
 
+  public async syncStore(): Promise<void> {
+    await this.store.syncValues();
+    await this.store.syncIdLists();
+  }
+
   public getExperimentList(): string[] {
     const configs = this.store.getAllConfigs();
     const list = [];

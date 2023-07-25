@@ -51,6 +51,8 @@ export default class SpecStore {
   private store: ConfigStore;
   private syncInterval: number;
   private idListSyncInterval: number;
+  private disableRulesetsSync: boolean;
+  private disableIdListsSync: boolean;
   private initialized: boolean;
   private syncTimer: NodeJS.Timeout | null;
   private idListsSyncTimer: NodeJS.Timeout | null;
@@ -90,6 +92,8 @@ export default class SpecStore {
     };
     this.syncInterval = options.rulesetsSyncIntervalMs;
     this.idListSyncInterval = options.idListsSyncIntervalMs;
+    this.disableRulesetsSync = options.disableRulesetsSync;
+    this.disableIdListsSync = options.disableIdListsSync;
     this.initialized = false;
     this.syncTimer = null;
     this.idListsSyncTimer = null;
@@ -178,15 +182,15 @@ export default class SpecStore {
     }
 
     // If the provided bootstrapValues can be used to bootstrap the SDK rulesets, then we don't
-    // need to wait for _syncValues() to finish before returning.
+    // need to wait for syncValues() to finish before returning.
     if (this.initReason === 'Bootstrap') {
-      this._syncValues();
+      this.syncValues();
     } else {
       if (adapter) {
         await this._fetchConfigSpecsFromAdapter();
       }
       if (this.lastUpdateTime === 0) {
-        await this._syncValues(true);
+        await this.syncValues(true);
       }
 
       this.setInitialUpdateTime();
@@ -224,16 +228,16 @@ export default class SpecStore {
       return null;
     }
     let message = '';
-    if (syncTimerInactive) {
+    if (syncTimerInactive && !this.disableRulesetsSync) {
       this.clearSyncTimer();
-      this._syncValues();
+      this.syncValues();
       message = message.concat(`Force reset sync timer. Last update time: ${
         this.syncTimerLastActiveTime
       }, now: ${Date.now()}`);
     }
-    if (idListsSyncTimerInactive) {
+    if (idListsSyncTimerInactive && !this.disableIdListsSync) {
       this.clearIdListsSyncTimer();
-      this._syncIdLists();
+      this.syncIdLists();
       message = message.concat(`Force reset id list sync timer. Last update time: ${
         this.idListsSyncTimerLastActiveTime
       }, now: ${Date.now()}`);
@@ -336,17 +340,17 @@ export default class SpecStore {
   }
 
   private pollForUpdates() {
-    if (this.syncTimer == null) {
+    if (this.syncTimer == null && !this.disableRulesetsSync) {
       this.syncTimer = poll(async () => {
         this.syncTimerLastActiveTime = Date.now();
-        await this._syncValues();
+        await this.syncValues();
       }, this.syncInterval);
     }
 
-    if (this.idListsSyncTimer == null) {
+    if (this.idListsSyncTimer == null && !this.disableIdListsSync) {
       this.idListsSyncTimer = poll(async () => {
         this.idListsSyncTimerLastActiveTime = Date.now();
-        await this._syncIdLists();
+        await this.syncIdLists();
       }, this.idListSyncInterval);
     }
   }
@@ -382,7 +386,7 @@ export default class SpecStore {
     }
   }
 
-  private async _syncValues(isColdStart: boolean = false): Promise<void> {
+  public async syncValues(isColdStart: boolean = false): Promise<void> {
     const adapter = this.dataAdapter;
     const shouldSyncFromAdapter =
       adapter?.supportsPollingUpdatesFor?.(DataAdapterKey.Rulesets) === true;
@@ -420,7 +424,7 @@ export default class SpecStore {
     }
   }
 
-  private async _syncIdLists(): Promise<void> {
+  public async syncIdLists(): Promise<void> {
     if (this.initStrategyForIDLists === 'none') {
       return;
     }

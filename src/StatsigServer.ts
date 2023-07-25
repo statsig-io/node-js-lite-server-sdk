@@ -424,6 +424,10 @@ export default class StatsigServer {
     );
   }
 
+  public async syncStore(): Promise<void> {
+    await this._evaluator.syncStore();
+  }
+
   public getClientInitializeResponse(
     user: StatsigUser,
   ): Record<string, unknown> | null {

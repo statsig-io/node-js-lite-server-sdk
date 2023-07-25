@@ -373,6 +373,10 @@ export const Statsig = {
     return this._enforceServer().getFeatureGateList();
   },
 
+  syncStore(): Promise<void> {
+    return this._enforceServer().syncStore();
+  },
+
   _enforceServer(): StatsigServer {
     let instance = StatsigInstanceUtils.getInstance();
     if (instance == null) {
