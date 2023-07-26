@@ -309,7 +309,7 @@ describe('DataAdapter', () => {
       await loadStore(syncingDataAdapter);
 
       // Manually sync store
-      await statsig.syncStore();
+      await statsig.syncConfigSpecs();
 
       // Check gates after syncing
       const passesGate2 = await statsig.checkGate(user, 'nfl_gate');

@@ -265,8 +265,11 @@ export default class Evaluator {
     return this.store.resetSyncTimerIfExited();
   }
 
-  public async syncStore(): Promise<void> {
+  public async syncStoreSpecs(): Promise<void> {
     await this.store.syncValues();
+  }
+
+  public async syncStoreIdLists(): Promise<void> {
     await this.store.syncIdLists();
   }
 
