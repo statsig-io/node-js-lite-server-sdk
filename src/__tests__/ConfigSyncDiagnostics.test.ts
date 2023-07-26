@@ -147,7 +147,7 @@ describe('ConfigSyncDiagnostics', () => {
       ok: false,
       status: 500,
     };
-    await StatsigTestUtils.getEvaluator()['store']._syncValues();
+    await StatsigTestUtils.getEvaluator()['store'].syncValues();
 
     Statsig.shutdown();
 
@@ -308,9 +308,9 @@ const statsig = Statsig.default;
 async function runSync(type: 'getIDList' | 'getConfigSpecs') {
   const evaluator = StatsigTestUtils.getEvaluator();
   if (type === 'getConfigSpecs') {
-    await evaluator['store']._syncValues();
+    await evaluator['store'].syncValues();
   }
   if (type === 'getIDList') {
-    await evaluator['store']._syncIdLists();
+    await evaluator['store'].syncIdLists();
   }
 }

@@ -44,6 +44,8 @@ export type ExplicitStatsigOptions = {
   initStrategyForIDLists: InitStrategy;
   postLogsRetryLimit: number;
   postLogsRetryBackoff: RetryBackoffFunc | number;
+  disableRulesetsSync: boolean;
+  disableIdListsSync: boolean;
 };
 
 /**
@@ -107,6 +109,8 @@ export function OptionsWithDefaults(
     ),
     postLogsRetryBackoff:
       opts.postLogsRetryBackoff ?? DEFAULT_POST_LOGS_RETRY_BACKOFF,
+    disableRulesetsSync: opts.disableRulesetsSync ?? false,
+    disableIdListsSync: opts.disableIdListsSync ?? false,
   };
 }
 

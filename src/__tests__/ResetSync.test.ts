@@ -57,19 +57,20 @@ describe('Verify sync intervals reset', () => {
   });
 
   test('Verify timers reset if rulesets stale', async () => {
-    expect.assertions(6);
     await statsig.initialize(secretKey);
     let now = Date.now();
 
     const evaluator = StatsigTestUtils.getEvaluator();
-    const spy = jest.spyOn(evaluator['store'], 'pollForUpdates');
+    const spyRulesetsSync = jest.spyOn(evaluator['store'], 'syncValues');
+    const spyIdListsSync = jest.spyOn(evaluator['store'], 'syncIdLists');
 
     let gate = await statsig.checkGate(
       { userID: '123', email: 'tore@packers.com' },
       'nfl_gate',
     );
     expect(gate).toBe(true);
-    expect(spy).toHaveBeenCalledTimes(0);
+    expect(spyRulesetsSync).toHaveBeenCalledTimes(0);
+    expect(spyIdListsSync).toHaveBeenCalledTimes(0);
 
     jest
       .spyOn(global.Date, 'now')
@@ -79,7 +80,8 @@ describe('Verify sync intervals reset', () => {
       'nfl_gate',
     );
     expect(gate).toBe(true);
-    expect(spy).toHaveBeenCalledTimes(0);
+    expect(spyRulesetsSync).toHaveBeenCalledTimes(0);
+    expect(spyIdListsSync).toHaveBeenCalledTimes(0);
 
     jest
       .spyOn(global.Date, 'now')
@@ -89,6 +91,30 @@ describe('Verify sync intervals reset', () => {
       'nfl_gate',
     );
     expect(gate).toBe(true);
-    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spyRulesetsSync).toHaveBeenCalledTimes(1);
+    expect(spyIdListsSync).toHaveBeenCalledTimes(1);
+  });
+
+  test('Verify timers dont reset if syncing is disabled', async () => {
+    await statsig.initialize(secretKey, {
+      disableRulesetsSync: true,
+      disableIdListsSync: true,
+    });
+    let now = Date.now();
+
+    const evaluator = StatsigTestUtils.getEvaluator();
+    const spyRulesetsSync = jest.spyOn(evaluator['store'], 'syncValues');
+    const spyIdListsSync = jest.spyOn(evaluator['store'], 'syncIdLists');
+
+    jest
+      .spyOn(global.Date, 'now')
+      .mockImplementation(() => now + (2 * 60 * 1000 + 1));
+    const gate = await statsig.checkGate(
+      { userID: '123', email: 'tore@packers.com' },
+      'nfl_gate',
+    );
+    expect(gate).toBe(true);
+    expect(spyRulesetsSync).toHaveBeenCalledTimes(0);
+    expect(spyIdListsSync).toHaveBeenCalledTimes(0);
   });
 });
