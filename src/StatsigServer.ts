@@ -86,7 +86,7 @@ export default class StatsigServer {
    * Initializes the statsig server SDK. This must be called before checking gates/configs or logging events.
    * @throws Error if a Server Secret Key is not provided
    */
-  public initializeAsync(): Promise<void> {
+  public initializeAsync(options: StatsigOptions = {}): Promise<void> {
     return this._errorBoundary.capture(
       () => {
         this._diagnostics.mark('initialize', 'overall', 'start');
@@ -95,6 +95,13 @@ export default class StatsigServer {
         }
 
         if (this._ready === true) {
+          if (options.allowReInitialize) {
+            if (options.bootstrapValues) {
+              this._evaluator.syncBootstrapValues(options.bootstrapValues);
+            } else {
+              return this._evaluator.syncStoreSpecs().then(_ => this._evaluator.syncStoreIdLists());
+            }
+          }
           return Promise.resolve();
         }
 
