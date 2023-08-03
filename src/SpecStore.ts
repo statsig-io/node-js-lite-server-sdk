@@ -184,7 +184,9 @@ export default class SpecStore {
     // If the provided bootstrapValues can be used to bootstrap the SDK rulesets, then we don't
     // need to wait for syncValues() to finish before returning.
     if (this.initReason === 'Bootstrap') {
-      this.syncValues();
+      if (!this.disableRulesetsSync) {
+        this.syncValues();
+      }
     } else {
       if (adapter) {
         await this._fetchConfigSpecsFromAdapter();
@@ -384,6 +386,11 @@ export default class SpecStore {
         samplingRates: this.samplingRates,
       });
     }
+  }
+
+  public syncBootstrapValues(bootstrapValues: string): void {
+    const specsJSON = JSON.parse(bootstrapValues);
+    this._process(specsJSON);
   }
 
   public async syncValues(isColdStart: boolean = false): Promise<void> {

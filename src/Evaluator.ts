@@ -3,7 +3,7 @@ import { ConfigCondition, ConfigRule, ConfigSpec } from './ConfigSpec';
 import Diagnostics from './Diagnostics';
 import { EvaluationDetails } from './EvaluationDetails';
 import SpecStore from './SpecStore';
-import { ExplicitStatsigOptions, InitStrategy } from './StatsigOptions';
+import { ExplicitStatsigOptions } from './StatsigOptions';
 import { StatsigUser } from './StatsigUser';
 import { notEmpty } from './utils/core';
 import parseUserAgent from './utils/parseUserAgent';
@@ -263,6 +263,10 @@ export default class Evaluator {
 
   public resetSyncTimerIfExited(): Error | null {
     return this.store.resetSyncTimerIfExited();
+  }
+
+  public syncBootstrapValues(bootstrapValues: string): void {
+    this.store.syncBootstrapValues(bootstrapValues);
   }
 
   public async syncStoreSpecs(): Promise<void> {

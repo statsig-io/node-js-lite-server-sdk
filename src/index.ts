@@ -57,7 +57,7 @@ export const Statsig = {
       StatsigInstanceUtils.setInstance(inst);
     }
 
-    return inst.initializeAsync();
+    return inst.initializeAsync(options);
   },
 
   /**
