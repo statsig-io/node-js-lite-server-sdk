@@ -95,7 +95,7 @@ export default class StatsigServer {
         }
 
         if (this._ready === true) {
-          if (options.reSync) {
+          if (options.reInitialize) {
             if (options.bootstrapValues) {
               this._evaluator.syncBootstrapValues(options.bootstrapValues);
             } else {
