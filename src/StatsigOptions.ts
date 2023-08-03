@@ -42,7 +42,7 @@ export type ExplicitStatsigOptions = {
   loggingMaxBufferSize: number;
   disableDiagnostics: boolean;
   initStrategyForIDLists: InitStrategy;
-  reInitialize: boolean;
+  allowReInitialize: boolean;
   postLogsRetryLimit: number;
   postLogsRetryBackoff: RetryBackoffFunc | number;
   disableRulesetsSync: boolean;
@@ -103,7 +103,7 @@ export function OptionsWithDefaults(
         'initStrategyForIDLists',
         'await',
       ) as InitStrategy | null) ?? 'await',
-    reInitialize: getBoolean(opts, 'reInitialize', false),
+    allowReInitialize: getBoolean(opts, 'allowReInitialize', false),
     postLogsRetryLimit: getNumber(
       opts,
       'postLogsRetryLimit',

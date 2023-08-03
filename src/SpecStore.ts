@@ -158,8 +158,7 @@ export default class SpecStore {
       } else {
         try {
           this.addDiagnosticsMarker('bootstrap', 'start', { step: 'process' });
-          specsJSON = JSON.parse(this.bootstrapValues);
-          if (this._process(specsJSON)) {
+          if (this.syncBootstrapValues(this.bootstrapValues)) {
             this.initReason = 'Bootstrap';
           }
           this.setInitialUpdateTime();
@@ -388,9 +387,9 @@ export default class SpecStore {
     }
   }
 
-  public syncBootstrapValues(bootstrapValues: string): void {
+  public syncBootstrapValues(bootstrapValues: string): boolean {
     const specsJSON = JSON.parse(bootstrapValues);
-    this._process(specsJSON);
+    return this._process(specsJSON);
   }
 
   public async syncValues(isColdStart: boolean = false): Promise<void> {
