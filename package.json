@@ -1,6 +1,6 @@
 {
   "name": "statsig-node-lite",
-  "version": "0.0.4-beta.6",
+  "version": "0.0.4",
   "description": "A slimmed version of the Statsig Node.js SDK.",
   "main": "dist/index.js",
   "scripts": {
