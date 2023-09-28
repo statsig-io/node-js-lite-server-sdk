@@ -99,7 +99,9 @@ export default class StatsigServer {
             if (options.bootstrapValues) {
               this._evaluator.syncBootstrapValues(options.bootstrapValues);
             } else {
-              return this._evaluator.syncStoreSpecs().then(_ => this._evaluator.syncStoreIdLists());
+              return this._evaluator
+                .syncStoreSpecs()
+                .then((_) => this._evaluator.syncStoreIdLists());
             }
           }
           return Promise.resolve();
