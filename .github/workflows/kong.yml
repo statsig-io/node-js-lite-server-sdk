@@ -30,10 +30,10 @@ jobs:
         run: npm install
 
       - name: Setup Node SDK
-        run: npm run kong -- setup nodejs -v
+        run: npm run kong -- setup node-lite -v
 
       - name: Build Bridge
-        run: npm run kong -- build nodejs -v
+        run: npm run kong -- build node-lite -v
 
       - name: Run Tests
-        run: npm run kong -- test nodejs -v -r
+        run: npm run kong -- test node-lite -v -r
