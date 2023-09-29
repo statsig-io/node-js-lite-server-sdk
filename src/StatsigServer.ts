@@ -23,6 +23,7 @@ import {
 } from './StatsigOptions';
 import { StatsigUser } from './StatsigUser';
 import StatsigFetcher from './utils/StatsigFetcher';
+import asyncify from './utils/asyncify';
 import { getStatsigMetadata, isUserIdentifiable } from './utils/core';
 
 const MAX_VALUE_SIZE = 64;
@@ -99,7 +100,9 @@ export default class StatsigServer {
             if (options.bootstrapValues) {
               this._evaluator.syncBootstrapValues(options.bootstrapValues);
             } else {
-              return this._evaluator.syncStoreSpecs().then(_ => this._evaluator.syncStoreIdLists());
+              return this._evaluator
+                .syncStoreSpecs()
+                .then((_) => this._evaluator.syncStoreIdLists());
             }
           }
           return Promise.resolve();
@@ -164,47 +167,39 @@ export default class StatsigServer {
     );
   }
 
+  // #region Check Gate
+
   /**
    * Check the value of a gate configured in the statsig console
    * @throws Error if initialize() was not called first
    * @throws Error if the gateName is not provided or not a non-empty string
    */
-  public checkGate(user: StatsigUser, gateName: string): Promise<boolean> {
-    return this._errorBoundary.capture(
-      () =>
-        this.getGateImpl(user, gateName, ExposureLogging.Enabled).then(
-          (gate) => gate.value,
-        ),
-      () => Promise.resolve(false),
-    );
+  public checkGateSync(user: StatsigUser, gateName: string): boolean {
+    return this.getFeatureGateSync(user, gateName).value;
   }
 
-  public getFeatureGate(
-    user: StatsigUser,
-    gateName: string,
-  ): Promise<FeatureGate> {
+  public getFeatureGateSync(user: StatsigUser, gateName: string): FeatureGate {
     return this._errorBoundary.capture(
       () => this.getGateImpl(user, gateName, ExposureLogging.Enabled),
-      () => Promise.resolve(makeEmptyFeatureGate(gateName)),
+      () => makeEmptyFeatureGate(gateName),
     );
   }
 
-  public async checkGateWithExposureLoggingDisabled(
+  public checkGateWithExposureLoggingDisabledSync(
     user: StatsigUser,
     gateName: string,
-  ): Promise<boolean> {
-    return this.getFeatureGateWithExposureLoggingDisabled(user, gateName).then(
-      (gate) => gate.value,
-    );
+  ): boolean {
+    return this.getFeatureGateWithExposureLoggingDisabledSync(user, gateName)
+      .value;
   }
 
-  public getFeatureGateWithExposureLoggingDisabled(
+  public getFeatureGateWithExposureLoggingDisabledSync(
     user: StatsigUser,
     gateName: string,
-  ): Promise<FeatureGate> {
+  ): FeatureGate {
     return this._errorBoundary.capture(
       () => this.getGateImpl(user, gateName, ExposureLogging.Disabled),
-      () => Promise.resolve(makeEmptyFeatureGate(gateName)),
+      () => makeEmptyFeatureGate(gateName),
     );
   }
 
@@ -213,28 +208,26 @@ export default class StatsigServer {
     this.logGateExposureImpl(user, gateName, evaluation, ExposureCause.Manual);
   }
 
+  //#endregion
+
+  // #region Get Config
   /**
    * Checks the value of a config for a given user
-   * @throws Error if initialize() was not called first
-   * @throws Error if the configName is not provided or not a non-empty string
    */
-  public getConfig(
-    user: StatsigUser,
-    configName: string,
-  ): Promise<DynamicConfig> {
+  public getConfigSync(user: StatsigUser, configName: string): DynamicConfig {
     return this._errorBoundary.capture(
       () => this.getConfigImpl(user, configName, ExposureLogging.Enabled),
-      () => Promise.resolve(new DynamicConfig(configName)),
+      () => new DynamicConfig(configName),
     );
   }
 
-  public getConfigWithExposureLoggingDisabled(
+  public getConfigWithExposureLoggingDisabledSync(
     user: StatsigUser,
     configName: string,
-  ): Promise<DynamicConfig> {
+  ): DynamicConfig {
     return this._errorBoundary.capture(
       () => this.getConfigImpl(user, configName, ExposureLogging.Disabled),
-      () => Promise.resolve(new DynamicConfig(configName)),
+      () => new DynamicConfig(configName),
     );
   }
 
@@ -248,29 +241,27 @@ export default class StatsigServer {
     );
   }
 
+  //#endregion
+
+  // #region Get Experiment
+
   /**
    * Checks the value of a config for a given user
    * @throws Error if initialize() was not called first
    * @throws Error if the experimentName is not provided or not a non-empty string
    */
-  public getExperiment(
+  public getExperimentSync(
     user: StatsigUser,
     experimentName: string,
-  ): Promise<DynamicConfig> {
-    return this._errorBoundary.capture(
-      () => this.getConfigImpl(user, experimentName, ExposureLogging.Enabled),
-      () => Promise.resolve(new DynamicConfig(experimentName)),
-    );
+  ): DynamicConfig {
+    return this.getConfigSync(user, experimentName);
   }
 
-  public getExperimentWithExposureLoggingDisabled(
+  public getExperimentWithExposureLoggingDisabledSync(
     user: StatsigUser,
     experimentName: string,
-  ): Promise<DynamicConfig> {
-    return this._errorBoundary.capture(
-      () => this.getConfigImpl(user, experimentName, ExposureLogging.Disabled),
-      () => Promise.resolve(new DynamicConfig(experimentName)),
-    );
+  ): DynamicConfig {
+    return this.getConfigWithExposureLoggingDisabledSync(user, experimentName);
   }
 
   public logExperimentExposure(user: StatsigUser, experimentName: string) {
@@ -283,25 +274,29 @@ export default class StatsigServer {
     );
   }
 
+  //#endregion
+
+  // #region Get Layer
+
   /**
    * Checks the value of a config for a given user
    * @throws Error if initialize() was not called first
    * @throws Error if the layerName is not provided or not a non-empty string
    */
-  public getLayer(user: StatsigUser, layerName: string): Promise<Layer> {
+  public getLayerSync(user: StatsigUser, layerName: string): Layer {
     return this._errorBoundary.capture(
       () => this.getLayerImpl(user, layerName, ExposureLogging.Enabled),
-      () => Promise.resolve(new Layer(layerName)),
+      () => new Layer(layerName),
     );
   }
 
-  public getLayerWithExposureLoggingDisabled(
+  public getLayerWithExposureLoggingDisabledSync(
     user: StatsigUser,
     layerName: string,
-  ): Promise<Layer> {
+  ): Layer {
     return this._errorBoundary.capture(
       () => this.getLayerImpl(user, layerName, ExposureLogging.Disabled),
-      () => Promise.resolve(new Layer(layerName)),
+      () => new Layer(layerName),
     );
   }
 
@@ -319,6 +314,8 @@ export default class StatsigServer {
       ExposureCause.Manual,
     );
   }
+
+  //#endregion
 
   /**
    * Log an event for data analysis and alerting or to measure the impact of an experiment
@@ -513,6 +510,124 @@ export default class StatsigServer {
     return this._evaluator.getExperimentList();
   }
 
+  //#region Deprecated Async Methods
+
+  /**
+   * @deprecated Please use checkGateSync instead.
+   * @see https://docs.statsig.com/server/deprecation-notices
+   */
+  public checkGate(user: StatsigUser, gateName: string): Promise<boolean> {
+    return asyncify(() => this.getFeatureGateSync(user, gateName).value);
+  }
+
+  /**
+   * @deprecated Please use getFeatureGateSync instead.
+   * @see https://docs.statsig.com/server/deprecation-notices
+   */
+  public getFeatureGate(
+    user: StatsigUser,
+    gateName: string,
+  ): Promise<FeatureGate> {
+    return asyncify(() => this.getFeatureGateSync(user, gateName));
+  }
+
+  /**
+   * @deprecated Please use checkGateWithExposureLoggingDisabledSync instead.
+   * @see https://docs.statsig.com/server/deprecation-notices
+   */
+  public async checkGateWithExposureLoggingDisabled(
+    user: StatsigUser,
+    gateName: string,
+  ): Promise<boolean> {
+    return asyncify(
+      () =>
+        this.getFeatureGateWithExposureLoggingDisabledSync(user, gateName)
+          .value,
+    );
+  }
+
+  /**
+   * @deprecated Please use getFeatureGateWithExposureLoggingDisabledSync instead.
+   * @see https://docs.statsig.com/server/deprecation-notices
+   */
+  public getFeatureGateWithExposureLoggingDisabled(
+    user: StatsigUser,
+    gateName: string,
+  ): Promise<FeatureGate> {
+    return asyncify(() =>
+      this.getFeatureGateWithExposureLoggingDisabledSync(user, gateName),
+    );
+  }
+
+  /**
+   * @deprecated Please use getConfigSync instead.
+   * @see https://docs.statsig.com/server/deprecation-notices
+   */
+  public getConfig(
+    user: StatsigUser,
+    configName: string,
+  ): Promise<DynamicConfig> {
+    return asyncify(() => this.getConfigSync(user, configName));
+  }
+
+  /**
+   * @deprecated Please use getConfigWithExposureLoggingDisabledSync instead.
+   * @see https://docs.statsig.com/server/deprecation-notices
+   */
+  public getConfigWithExposureLoggingDisabled(
+    user: StatsigUser,
+    configName: string,
+  ): Promise<DynamicConfig> {
+    return asyncify(() =>
+      this.getConfigWithExposureLoggingDisabledSync(user, configName),
+    );
+  }
+
+  /**
+   * @deprecated Please use getExperimentSync instead.
+   * @see https://docs.statsig.com/server/deprecation-notices
+   */
+  public getExperiment(
+    user: StatsigUser,
+    experimentName: string,
+  ): Promise<DynamicConfig> {
+    return this.getConfig(user, experimentName);
+  }
+
+  /**
+   * @deprecated Please use getExperimentWithExposureLoggingDisabledSync instead.
+   * @see https://docs.statsig.com/server/deprecation-notices
+   */
+  public getExperimentWithExposureLoggingDisabled(
+    user: StatsigUser,
+    experimentName: string,
+  ): Promise<DynamicConfig> {
+    return this.getConfigWithExposureLoggingDisabled(user, experimentName);
+  }
+
+  /**
+   * @deprecated Please use getLayerSync instead.
+   * @see https://docs.statsig.com/server/deprecation-notices
+   */
+  public getLayer(user: StatsigUser, layerName: string): Promise<Layer> {
+    return asyncify(() => this.getLayerSync(user, layerName));
+  }
+
+  /**
+   * @deprecated Please use getLayerWithExposureLoggingDisabledSync instead.
+   * @see https://docs.statsig.com/server/deprecation-notices
+   */
+  public getLayerWithExposureLoggingDisabled(
+    user: StatsigUser,
+    layerName: string,
+  ): Promise<Layer> {
+    return asyncify(() =>
+      this.getLayerWithExposureLoggingDisabledSync(user, layerName),
+    );
+  }
+
+  //#endregion
+
   //
   // PRIVATE
   //
@@ -531,37 +646,21 @@ export default class StatsigServer {
     );
   }
 
-  private async getGateImpl(
+  private getGateImpl(
     inputUser: StatsigUser,
     gateName: string,
     exposureLogging: ExposureLogging,
-  ): Promise<FeatureGate> {
-    const { rejection, normalizedUser: user } = this._validateInputs(
+  ): FeatureGate {
+    const { error, normalizedUser: user } = this._validateInputs(
       inputUser,
       gateName,
     );
 
-    if (rejection) {
-      return rejection;
+    if (error) {
+      throw error;
     }
 
     const evaluation = this._evaluator.checkGate(user, gateName);
-    if (evaluation.fetch_from_server) {
-      const res = await this._fetcher.dispatch(
-        this._options.api + '/check_gate',
-        Object.assign({
-          user: user,
-          gateName: gateName,
-          statsigMetadata: getStatsigMetadata({
-            exposureLoggingDisabled:
-              exposureLogging === ExposureLogging.Disabled,
-          }),
-        }),
-        5000,
-      );
-      return await res.json();
-    }
-
     if (exposureLogging !== ExposureLogging.Disabled) {
       this.logGateExposureImpl(
         user,
@@ -571,13 +670,11 @@ export default class StatsigServer {
       );
     }
 
-    return Promise.resolve(
-      makeFeatureGate(
-        gateName,
-        evaluation.rule_id,
-        evaluation.value === true,
-        evaluation.group_name,
-      ),
+    return makeFeatureGate(
+      gateName,
+      evaluation.rule_id,
+      evaluation.value === true,
+      evaluation.group_name,
     );
   }
 
@@ -599,21 +696,17 @@ export default class StatsigServer {
     inputUser: StatsigUser,
     configName: string,
     exposureLogging: ExposureLogging,
-  ): Promise<DynamicConfig> {
-    const { rejection, normalizedUser: user } = this._validateInputs(
+  ): DynamicConfig {
+    const { error, normalizedUser: user } = this._validateInputs(
       inputUser,
       configName,
     );
 
-    if (rejection) {
-      return rejection;
+    if (error) {
+      throw error;
     }
 
     const evaluation = this._evaluator.getConfig(user, configName);
-    if (evaluation.fetch_from_server) {
-      return this._fetchConfig(user, configName, exposureLogging);
-    }
-
     const config = new DynamicConfig(
       configName,
       evaluation.json_value as Record<string, unknown>,
@@ -634,61 +727,40 @@ export default class StatsigServer {
       );
     }
 
-    return Promise.resolve(config);
+    return config;
   }
 
-  private async getLayerImpl(
+  private getLayerImpl(
     inputUser: StatsigUser,
     layerName: string,
     exposureLogging: ExposureLogging,
-  ): Promise<Layer> {
-    const { rejection, normalizedUser: user } = this._validateInputs(
+  ): Layer {
+    const { error, normalizedUser: user } = this._validateInputs(
       inputUser,
       layerName,
     );
 
-    if (rejection) {
-      return rejection;
+    if (error) {
+      throw error;
     }
 
     const ret = this._evaluator.getLayer(user, layerName);
-
-    if (!ret.fetch_from_server) {
-      const logFunc = (layer: Layer, parameterName: string) => {
-        this.logLayerParameterExposureImpl(
-          user,
-          layerName,
-          parameterName,
-          ret,
-          ExposureCause.Automatic,
-        );
-      };
-      const layer = new Layer(
+    const logFunc = (layer: Layer, parameterName: string) => {
+      this.logLayerParameterExposureImpl(
+        user,
         layerName,
-        ret?.json_value as Record<string, unknown>,
-        ret?.rule_id,
-        exposureLogging === ExposureLogging.Disabled ? null : logFunc,
+        parameterName,
+        ret,
+        ExposureCause.Automatic,
       );
+    };
 
-      return Promise.resolve(layer);
-    }
-
-    if (ret.config_delegate) {
-      try {
-        const config = await this._fetchConfig(
-          user,
-          ret.config_delegate,
-          exposureLogging,
-        );
-        return await Promise.resolve(
-          new Layer(layerName, config?.value, config?.getRuleID()),
-        );
-      } catch {
-        return await Promise.resolve(new Layer(layerName));
-      }
-    }
-
-    return Promise.resolve(new Layer(layerName));
+    return new Layer(
+      layerName,
+      ret?.json_value as Record<string, unknown>,
+      ret?.rule_id,
+      exposureLogging === ExposureLogging.Disabled ? null : logFunc,
+    );
   }
 
   private logLayerParameterExposureImpl(
@@ -713,22 +785,18 @@ export default class StatsigServer {
 
   private _validateInputs(user: StatsigUser, configName: string) {
     const result: {
-      rejection: null | Promise<never>;
+      error: null | Error;
       normalizedUser: StatsigUser;
-    } = { rejection: null, normalizedUser: { userID: '' } };
+    } = { error: null, normalizedUser: { userID: '' } };
     if (this._ready !== true) {
-      result.rejection = Promise.reject(new StatsigUninitializedError());
+      result.error = new StatsigUninitializedError();
     } else if (typeof configName !== 'string' || configName.length === 0) {
-      result.rejection = Promise.reject(
-        new StatsigInvalidArgumentError(
-          'Lookup key must be a non-empty string',
-        ),
+      result.error = new StatsigInvalidArgumentError(
+        'Lookup key must be a non-empty string',
       );
     } else if (!isUserIdentifiable(user)) {
-      result.rejection = Promise.reject(
-        new StatsigInvalidArgumentError(
-          'Must pass a valid user with a userID or customID for the server SDK to work. See https://docs.statsig.com/messages/serverRequiredUserID/ for more details.',
-        ),
+      result.error = new StatsigInvalidArgumentError(
+        'Must pass a valid user with a userID or customID for the server SDK to work. See https://docs.statsig.com/messages/serverRequiredUserID/ for more details.',
       );
     } else {
       result.normalizedUser = normalizeUser(user, this._options);

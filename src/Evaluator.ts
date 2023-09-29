@@ -64,7 +64,7 @@ export default class Evaluator {
     value: boolean,
     userID: string | null = null,
   ): void {
-    let overrides = this.gateOverrides[gateName] ?? {};
+    const overrides = this.gateOverrides[gateName] ?? {};
     overrides[userID == null ? '' : userID] = value;
     this.gateOverrides[gateName] = overrides;
   }
@@ -74,7 +74,7 @@ export default class Evaluator {
     value: Record<string, unknown>,
     userID: string | null = '',
   ): void {
-    let overrides = this.configOverrides[configName] ?? {};
+    const overrides = this.configOverrides[configName] ?? {};
     overrides[userID == null ? '' : userID] = value;
     this.configOverrides[configName] = overrides;
   }
@@ -84,7 +84,7 @@ export default class Evaluator {
     value: Record<string, unknown>,
     userID: string | null = '',
   ): void {
-    let overrides = this.layerOverrides[layerName] ?? {};
+    const overrides = this.layerOverrides[layerName] ?? {};
     overrides[userID == null ? '' : userID] = value;
     this.layerOverrides[layerName] = overrides;
   }
@@ -107,7 +107,7 @@ export default class Evaluator {
       );
     }
 
-    return this._evalConfig(user, this.store.getGate(gateName));
+    return this._evalSpec(user, this.store.getGate(gateName));
   }
 
   public getConfig(user: StatsigUser, configName: string): ConfigEvaluation {
@@ -128,7 +128,7 @@ export default class Evaluator {
       );
     }
 
-    return this._evalConfig(user, this.store.getConfig(configName));
+    return this._evalSpec(user, this.store.getConfig(configName));
   }
 
   public getLayer(user: StatsigUser, layerName: string): ConfigEvaluation {
@@ -149,7 +149,7 @@ export default class Evaluator {
       );
     }
 
-    return this._evalConfig(user, this.store.getLayer(layerName));
+    return this._evalSpec(user, this.store.getLayer(layerName));
   }
 
   public getClientInitializeResponse(
@@ -166,7 +166,7 @@ export default class Evaluator {
         const res = this._eval(user, spec);
         return {
           name: getHashedName(gate),
-          value: res.fetch_from_server ? false : res.value,
+          value: res.unsupported ? false : res.value,
           rule_id: res.rule_id,
           secondary_exposures: this._cleanExposures(res.secondary_exposures),
         };
@@ -210,7 +210,7 @@ export default class Evaluator {
     const layers = Object.entries(this.store.getAllLayers()).map(
       ([layer, spec]) => {
         const res = this._eval(user, spec);
-        let format = this._specToInitializeResponse(spec, res);
+        const format = this._specToInitializeResponse(spec, res);
         format.explicit_parameters = spec.explicitParameters ?? [];
         if (res.config_delegate != null && res.config_delegate !== '') {
           const delegateSpec = this.store.getConfig(res.config_delegate);
@@ -281,7 +281,7 @@ export default class Evaluator {
     const configs = this.store.getAllConfigs();
     const list = [];
     for (const configName in configs) {
-      let config = configs[configName];
+      const config = configs[configName];
       if (config.entity === 'experiment') {
         list.push(configName);
       }
@@ -293,7 +293,7 @@ export default class Evaluator {
     const gates = this.store.getAllGates();
     const list = [];
     for (const gateName in gates) {
-      let gate = gates[gateName];
+      const gate = gates[gateName];
       if (gate.entity === 'feature_gate') {
         list.push(gateName);
       }
@@ -371,7 +371,7 @@ export default class Evaluator {
   ): InitializeResponse {
     const output: InitializeResponse = {
       name: getHashedName(spec.name),
-      value: res.fetch_from_server ? {} : res.json_value,
+      value: res.unsupported ? {} : res.json_value,
       group: res.rule_id,
       rule_id: res.rule_id,
       is_device_based:
@@ -406,7 +406,7 @@ export default class Evaluator {
     this.store.shutdown();
   }
 
-  _evalConfig(user: StatsigUser, config: ConfigSpec | null): ConfigEvaluation {
+  _evalSpec(user: StatsigUser, config: ConfigSpec | null): ConfigEvaluation {
     if (!config) {
       return new ConfigEvaluation(false, '', null).withEvaluationDetails(
         EvaluationDetails.make(
@@ -418,6 +418,10 @@ export default class Evaluator {
     }
 
     const evaulation = this._eval(user, config);
+    if (evaulation.evaluation_details) {
+      return evaulation;
+    }
+
     return evaulation.withEvaluationDetails(
       EvaluationDetails.make(
         this.store.getLastUpdateTime(),
@@ -440,10 +444,13 @@ export default class Evaluator {
 
     let secondary_exposures: Record<string, string>[] = [];
     for (let i = 0; i < config.rules.length; i++) {
-      let rule = config.rules[i];
+      const rule = config.rules[i];
       const ruleResult = this._evalRule(user, rule);
-      if (ruleResult.fetch_from_server) {
-        return ConfigEvaluation.fetchFromServer();
+      if (ruleResult.unsupported) {
+        return ConfigEvaluation.unsupported(
+          this.store.getLastUpdateTime(),
+          this.store.getInitialUpdateTime(),
+        );
       }
 
       secondary_exposures = secondary_exposures.concat(
@@ -540,8 +547,11 @@ export default class Evaluator {
 
     for (const condition of rule.conditions) {
       const result = this._evalCondition(user, condition);
-      if (result.fetchFromServer) {
-        return ConfigEvaluation.fetchFromServer();
+      if (result.unsupported) {
+        return ConfigEvaluation.unsupported(
+          this.store.getLastUpdateTime(),
+          this.store.getInitialUpdateTime(),
+        );
       }
 
       if (!result.passes) {
@@ -567,23 +577,27 @@ export default class Evaluator {
   _evalCondition(
     user: StatsigUser,
     condition: ConfigCondition,
-  ): { passes: boolean; fetchFromServer?: boolean; exposures?: any[] } {
+  ): {
+    passes: boolean;
+    unsupported?: boolean;
+    exposures?: Record<string, string>[];
+  } {
     let value = null;
-    let field = condition.field;
-    let target = condition.targetValue;
-    let idType = condition.idType;
+    const field = condition.field;
+    const target = condition.targetValue;
+    const idType = condition.idType;
     switch (condition.type.toLowerCase()) {
       case 'public':
         return { passes: true };
       case 'fail_gate':
-      case 'pass_gate':
+      case 'pass_gate': {
         const gateResult = this.checkGate(user, target as string);
-        if (gateResult?.fetch_from_server) {
-          return { passes: false, fetchFromServer: true };
+        if (gateResult?.unsupported) {
+          return { passes: false, unsupported: true };
         }
         value = gateResult?.value;
 
-        let allExposures = gateResult?.secondary_exposures ?? [];
+        const allExposures = gateResult?.secondary_exposures ?? [];
         allExposures.push({
           gate: String(target),
           gateValue: String(value),
@@ -595,6 +609,41 @@ export default class Evaluator {
             condition.type.toLowerCase() === 'fail_gate' ? !value : !!value,
           exposures: allExposures,
         };
+      }
+      case 'multi_pass_gate':
+      case 'multi_fail_gate': {
+        if (!Array.isArray(target)) {
+          return { passes: false, unsupported: true };
+        }
+        const gateNames = target as string[];
+        let value = false;
+        let exposures: Record<string, string>[] = [];
+        for (const gateName of gateNames) {
+          const gateResult = this.checkGate(user, gateName as string);
+          if (gateResult?.unsupported) {
+            return { passes: false, unsupported: true };
+          }
+          const resValue =
+            condition.type === 'multi_pass_gate'
+              ? gateResult.value === true
+              : gateResult.value === false;
+          exposures.push({
+            gate: String(gateName),
+            gateValue: String(gateResult?.value),
+            ruleID: gateResult?.rule_id ?? '',
+          });
+          exposures = exposures.concat(gateResult.secondary_exposures);
+
+          if (resValue === true) {
+            value = true;
+            break;
+          }
+        }
+        return {
+          passes: value,
+          exposures: exposures,
+        };
+      }
       case 'ip_based':
         // this would apply to things like 'country', 'region', etc.
         value = getFromUser(user, field);
@@ -612,18 +661,19 @@ export default class Evaluator {
       case 'current_time':
         value = Date.now();
         break;
-      case 'user_bucket':
+      case 'user_bucket': {
         const salt = condition.additionalValues?.salt;
         const userHash = computeUserHash(
           salt + '.' + this._getUnitID(user, idType) ?? '',
         );
         value = Number(userHash % BigInt(USER_BUCKET_COUNT));
         break;
+      }
       case 'unit_id':
         value = this._getUnitID(user, idType);
         break;
       default:
-        return { passes: false, fetchFromServer: true };
+        return { passes: false, unsupported: true };
     }
 
     const op = condition.operator?.toLowerCase();
@@ -789,12 +839,12 @@ export default class Evaluator {
       case 'not_in_segment_list': {
         const list = this.store.getIDList(target as string)?.ids;
         value = hashUnitIDForIDList(value);
-        let inList = typeof list === 'object' && list[value] === true;
+        const inList = typeof list === 'object' && list[value] === true;
         evalResult = op === 'in_segment_list' ? inList : !inList;
         break;
       }
       default:
-        return { passes: false, fetchFromServer: true };
+        return { passes: false, unsupported: true };
     }
     return { passes: evalResult };
   }
