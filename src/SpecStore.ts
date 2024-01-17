@@ -225,23 +225,30 @@ export default class SpecStore {
     const idListsSyncTimerInactive =
       this.idListsSyncTimerLastActiveTime <
       Date.now() - Math.max(SYNC_OUTDATED_MAX, this.idListSyncInterval);
-    if (!syncTimerInactive && !idListsSyncTimerInactive) {
+    if (
+      (!syncTimerInactive || this.disableRulesetsSync) &&
+      (!idListsSyncTimerInactive || this.disableIdListsSync)
+    ) {
       return null;
     }
     let message = '';
     if (syncTimerInactive && !this.disableRulesetsSync) {
       this.clearSyncTimer();
       this.syncValues();
-      message = message.concat(`Force reset sync timer. Last update time: ${
-        this.syncTimerLastActiveTime
-      }, now: ${Date.now()}`);
+      message = message.concat(
+        `Force reset sync timer. Last update time: ${
+          this.syncTimerLastActiveTime
+        }, now: ${Date.now()}`,
+      );
     }
     if (idListsSyncTimerInactive && !this.disableIdListsSync) {
       this.clearIdListsSyncTimer();
       this.syncIdLists();
-      message = message.concat(`Force reset id list sync timer. Last update time: ${
-        this.idListsSyncTimerLastActiveTime
-      }, now: ${Date.now()}`);
+      message = message.concat(
+        `Force reset id list sync timer. Last update time: ${
+          this.idListsSyncTimerLastActiveTime
+        }, now: ${Date.now()}`,
+      );
     }
     this.pollForUpdates();
     return new Error(message);
