@@ -386,6 +386,7 @@ export default class Evaluator {
   ): Record<string, string>[] {
     const seen: Record<string, boolean> = {};
     return exposures
+      .filter((exposure) => !exposure.gate.startsWith('segment:'))
       .map((exposure: Record<string, string>) => {
         const key = `${exposure.gate}|${exposure.gateValue}|${exposure.ruleID}`;
         if (seen[key]) {
@@ -413,6 +414,7 @@ export default class Evaluator {
     }
 
     const evaulation = this._eval(user, config);
+    evaulation.secondary_exposures = this._cleanExposures(evaulation.secondary_exposures);
     if (evaulation.evaluation_details) {
       return evaulation;
     }
