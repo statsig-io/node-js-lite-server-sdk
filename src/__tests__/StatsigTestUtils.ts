@@ -29,7 +29,7 @@ export function assertMarkerEqual(
   expect(marker['key']).toBe(key);
   expect(marker['action']).toBe(action);
   expect(marker['step']).toBe(step || null);
-  expect(marker['value']).toBe(value || null);
+  expect(marker['value']).toBe(value === undefined ? null : value);
   expect(marker['timestamp'] instanceof Number);
   expect(marker['metadata']).toStrictEqual(metadata);
 }

@@ -305,6 +305,10 @@ export default class SpecStore {
     const specsString = await response.text();
     const processResult = this._process(JSON.parse(specsString));
     if (!processResult) {
+      this.addDiagnosticsMarker('download_config_specs', 'end', {
+        step: 'process',
+        value: false,
+      });
       return;
     }
     this.initReason = 'Network';
@@ -484,6 +488,13 @@ export default class SpecStore {
   // returns a boolean indicating whether specsJSON has was successfully parsed
   private _process(specsJSON: Record<string, unknown>): boolean {
     if (!specsJSON?.has_updates) {
+      return false;
+    }
+
+    if (
+      specsJSON?.time !== undefined &&
+      Number(specsJSON.time) <= this.lastUpdateTime
+    ) {
       return false;
     }
 

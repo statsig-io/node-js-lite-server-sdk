@@ -131,7 +131,7 @@ describe('ConfigSyncDiagnostics', () => {
       });
       assertMarkerEqual(markers[3], 'download_config_specs', 'end', {
         step: 'process',
-        value: true,
+        value: false,
       });
       expect(markers.length).toBe(4);
     },

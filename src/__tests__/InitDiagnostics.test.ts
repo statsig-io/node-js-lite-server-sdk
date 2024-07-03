@@ -5,12 +5,9 @@
 // dataadapter init
 
 import Statsig from '../index';
-import { DataAdapterKey } from '../interfaces/IDataAdapter';
 import StatsigInstanceUtils from '../StatsigInstanceUtils';
-import { GatesForIdListTest } from './BootstrapWithDataAdapter.data';
 import exampleConfigSpecs from './jest.setup';
 import { assertMarkerEqual } from './StatsigTestUtils';
-import { TestSyncingDataAdapter } from './TestDataAdapter';
 
 jest.mock('node-fetch', () => jest.fn());
 
@@ -253,7 +250,7 @@ describe('InitDiagnostics', () => {
 
   it('test bootstrap config specs init', async () => {
     const jsonResponse = {
-      time: Date.now(),
+      time: 1,
       feature_gates: [
         exampleConfigSpecs.gate,
         exampleConfigSpecs.disabled_gate,
