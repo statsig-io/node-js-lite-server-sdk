@@ -493,7 +493,7 @@ export default class SpecStore {
 
     if (
       specsJSON?.time !== undefined &&
-      Number(specsJSON.time) <= this.lastUpdateTime
+      Number(specsJSON.time) < this.lastUpdateTime
     ) {
       return false;
     }
