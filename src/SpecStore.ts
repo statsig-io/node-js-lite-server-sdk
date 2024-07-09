@@ -210,9 +210,11 @@ export default class SpecStore {
 
   private async _initIDLists(): Promise<void> {
     const adapter = this.dataAdapter;
-    const bootstrapIdLists = await adapter?.get(DataAdapterKey.IDLists);
-    if (adapter && typeof bootstrapIdLists?.result === 'string') {
-      await this.syncIdListsFromDataAdapter(adapter, bootstrapIdLists.result);
+    if (adapter) {
+      const success = await this.syncIdListsFromDataAdapter();
+      if (!success) {
+        await this.syncIdListsFromNetwork();
+      }
     } else {
       await this.syncIdListsFromNetwork();
     }
@@ -333,7 +335,8 @@ export default class SpecStore {
       DataAdapterKey.Rulesets,
     );
     if (result && !error) {
-      const configSpecs = JSON.parse(result);
+      const configSpecs =
+        typeof result === 'string' ? JSON.parse(result) : result;
       if (this._process(configSpecs)) {
         this.initReason = 'DataAdapter';
       }
@@ -449,9 +452,8 @@ export default class SpecStore {
     const adapter = this.dataAdapter;
     const shouldSyncFromAdapter =
       adapter?.supportsPollingUpdatesFor?.(DataAdapterKey.IDLists) === true;
-    const adapterIdLists = await adapter?.get(DataAdapterKey.IDLists);
-    if (shouldSyncFromAdapter && typeof adapterIdLists?.result === 'string') {
-      await this.syncIdListsFromDataAdapter(adapter, adapterIdLists.result);
+    if (shouldSyncFromAdapter) {
+      await this.syncIdListsFromDataAdapter();
     } else {
       await this.syncIdListsFromNetwork();
     }
@@ -577,41 +579,53 @@ export default class SpecStore {
     return reverseMapping;
   }
 
-  private async syncIdListsFromDataAdapter(
-    dataAdapter: IDataAdapter,
-    listsLookupString: string,
-  ): Promise<void> {
-    const lookup = IDListUtil.parseBootstrapLookup(listsLookupString);
-    if (!lookup) {
-      return;
-    }
-
-    const tasks: Promise<void>[] = [];
-    for (const name of lookup) {
-      tasks.push(
-        new Promise(async (resolve) => {
-          const data = await dataAdapter.get(
-            IDListUtil.getIdListDataStoreKey(name),
-          );
-          if (!data.result) {
-            return;
-          }
-
-          this.store.idLists[name] = {
-            ids: {},
-            readBytes: 0,
-            url: 'bootstrap',
-            fileID: 'bootstrap',
-            creationTime: 0,
-          };
-
-          IDListUtil.updateIdList(this.store.idLists, name, data.result);
-          resolve();
-        }),
+  private async syncIdListsFromDataAdapter(): Promise<boolean> {
+    try {
+      const dataAdapter = this.dataAdapter;
+      if (!dataAdapter) {
+        return false;
+      }
+      const { result: adapterIdLists } = await dataAdapter.get(
+        DataAdapterKey.IDLists,
       );
-    }
+      if (!adapterIdLists) {
+        return false;
+      }
+      const lookup = IDListUtil.parseBootstrapLookup(adapterIdLists);
+      if (!lookup) {
+        return false;
+      }
 
-    await Promise.all(tasks);
+      const tasks: Promise<void>[] = [];
+      for (const name of lookup) {
+        tasks.push(
+          new Promise(async (resolve) => {
+            const { result: data } = await dataAdapter.get(
+              IDListUtil.getIdListDataStoreKey(name),
+            );
+            if (!data || typeof data !== 'string') {
+              return;
+            }
+
+            this.store.idLists[name] = {
+              ids: {},
+              readBytes: 0,
+              url: 'bootstrap',
+              fileID: 'bootstrap',
+              creationTime: 0,
+            };
+
+            IDListUtil.updateIdList(this.store.idLists, name, data);
+            resolve();
+          }),
+        );
+      }
+
+      await Promise.all(tasks);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   private async syncIdListsFromNetwork(): Promise<void> {

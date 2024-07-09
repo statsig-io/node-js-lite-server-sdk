@@ -1,11 +1,14 @@
 import * as statsigsdk from '../index';
 import exampleConfigSpecs from './jest.setup';
-import TestDataAdapter, { TestSyncingDataAdapter } from './TestDataAdapter';
+import TestDataAdapter, {
+  TestObjectDataAdapter,
+  TestSyncingDataAdapter,
+} from './TestDataAdapter';
 import { GatesForIdListTest } from './BootstrapWithDataAdapter.data';
 
 jest.mock('node-fetch', () => jest.fn());
 import fetch from 'node-fetch';
-import { DataAdapterKey } from '../interfaces/IDataAdapter';
+import { DataAdapterKey, IDataAdapter } from '../interfaces/IDataAdapter';
 import StatsigInstanceUtils from '../StatsigInstanceUtils';
 import StatsigTestUtils from './StatsigTestUtils';
 
@@ -27,11 +30,12 @@ describe('DataAdapter', () => {
     custom: { level: 9 },
   };
 
-  async function loadStore(dataAdapter: TestDataAdapter) {
+  async function loadStore(dataAdapter: IDataAdapter) {
     // Manually load data into adapter store
-    const gates: unknown[] = [];
+    let gates: unknown[] = [];
     const configs: unknown[] = [];
     gates.push(exampleConfigSpecs.gate);
+    gates = gates.concat(GatesForIdListTest);
     configs.push(exampleConfigSpecs.config);
     const time = Date.now();
     await dataAdapter.initialize();
@@ -45,6 +49,11 @@ describe('DataAdapter', () => {
         has_updates: true,
       }),
       time,
+    );
+    await dataAdapter.set(DataAdapterKey.IDLists, '["user_id_list"]');
+    await dataAdapter.set(
+      DataAdapterKey.IDLists + '::user_id_list',
+      '+Z/hEKLio\n+M5m6a10x\n',
     );
   }
 
@@ -146,7 +155,7 @@ describe('DataAdapter', () => {
       await statsig.initialize('secret-key', statsigOptions);
 
       const { result } = await dataAdapter.get(DataAdapterKey.Rulesets);
-      const configSpecs = JSON.parse(result!);
+      const configSpecs = JSON.parse(result as string);
 
       // Check gates
       const gates = configSpecs['feature_gates'];
@@ -202,13 +211,14 @@ describe('DataAdapter', () => {
       });
 
       const { result } = await dataAdapter.get(DataAdapterKey.Rulesets);
-      const configSpecs = JSON.parse(result!);
+      const configSpecs = JSON.parse(result as string);
 
       // Check gates
       const gates = configSpecs['feature_gates'];
 
-      const expectedGates: unknown[] = [];
+      let expectedGates: unknown[] = [];
       expectedGates.push(exampleConfigSpecs.gate);
+      expectedGates = expectedGates.concat(GatesForIdListTest);
       expect(gates).toEqual(expectedGates);
 
       // Check configs
@@ -324,7 +334,7 @@ describe('DataAdapter', () => {
         name: 'Seattle Seahawks',
         yearFounded: 1974,
       });
-    })
+    });
 
     it('still initializes id lists from the network', async () => {
       isNetworkEnabled = true;
@@ -448,6 +458,58 @@ describe('DataAdapter', () => {
         name: 'Seattle Seahawks',
         yearFounded: 1974,
       });
+    });
+  });
+
+  describe('when data adapter returns a raw object', () => {
+    const dataAdapter = new TestObjectDataAdapter();
+
+    beforeEach(() => {
+      StatsigInstanceUtils.setInstance(null);
+    });
+
+    afterEach(async () => {
+      statsig.shutdown();
+    });
+
+    it('fetches config specs from adapter when network is down', async () => {
+      await loadStore(dataAdapter);
+
+      // Initialize without network
+      await statsig.initialize('secret-key', {
+        localMode: true,
+        ...statsigOptions,
+        dataAdapter,
+      });
+
+      // Check gates
+      expect(statsig.checkGateSync(user, 'nfl_gate')).toEqual(true);
+
+      // Check configs
+      const config = await statsig.getConfig(
+        user,
+        exampleConfigSpecs.config.name,
+      );
+      expect(config.getValue('seahawks', null)).toEqual({
+        name: 'Seattle Seahawks',
+        yearFounded: 1974,
+      });
+    });
+
+    it('fetches id lists from adapter when network is down', async () => {
+      await loadStore(dataAdapter);
+
+      // Initialize without network
+      await statsig.initialize('secret-key', {
+        localMode: true,
+        ...statsigOptions,
+        dataAdapter,
+      });
+
+      // Check gates
+      expect(
+        statsig.checkGateSync({ userID: 'a-user' }, 'test_id_list'),
+      ).toEqual(true);
     });
   });
 });
