@@ -16,32 +16,32 @@ describe('Check custom DCS url', () => {
     apiForDownloadConfigSpecs: customUrl,
   });
   const statsigServer = new StatsigServer('secret-123', options);
-  
+
   const spy = jest
-    // @ts-ignore  
+    // @ts-ignore
     .spyOn(statsigServer._fetcher, 'post')
     .mockImplementation(() => {
-      return new Promise((r) => {
-        return new Response(JSON.stringify(jsonResponse), { status: 200 });
-      })
+      return Promise.resolve(
+        new Response(JSON.stringify(jsonResponse), { status: 200 }),
+      );
     });
-  
+
   it('works', async () => {
     await statsigServer.initializeAsync();
     statsigServer.logEvent({ userID: '42' }, 'test');
     await statsigServer.flush();
 
-    expect(spy).toHaveBeenCalledWith(customUrl + dcsPath, jasmine.anything());
+    expect(spy).toHaveBeenCalledWith(customUrl + dcsPath, expect.anything());
     expect(spy).not.toHaveBeenCalledWith(
       customUrl + '/get_id_lists',
-      jasmine.anything(),
+      expect.anything(),
     );
     expect(spy).not.toHaveBeenCalledWith(
       customUrl + '/log_event',
-      jasmine.anything(),
+      expect.anything(),
     );
 
-    spy.mock.calls.forEach(u => {
+    spy.mock.calls.forEach((u) => {
       if (u[0].endsWith(dcsPath) && u[0] != customUrl + dcsPath) {
         fail('download_config_spec should not be called on another base url');
       }

@@ -11,7 +11,6 @@ const CONFIG_SPEC_RESPONSE = JSON.stringify(
   require('./data/download_config_spec.json'),
 );
 
-const INIT_RESPONSE = require('./data/initialize_response.json');
 let postedLogs = {
   events: [],
 };
@@ -67,9 +66,9 @@ describe('Verify e2e behavior of the SDK with mocked network', () => {
 
   test('Verify checkGate and exposure logs', async () => {
     await statsig.initialize('secret-123', { disableDiagnostics: true });
-    expect(statsig.getClientInitializeResponse(statsigUser)).toEqual(
-      INIT_RESPONSE,
-    );
+    expect(statsig.getClientInitializeResponse(statsigUser)).toMatchSnapshot({
+      time: expect.any(Number),
+    });
     const on1 = await statsig.checkGate(statsigUser, 'always_on_gate');
     expect(on1).toEqual(true);
 
@@ -234,9 +233,9 @@ describe('Verify e2e behavior of the SDK with mocked network', () => {
 
   test('Verify partial rollout', async () => {
     await statsig.initialize('secret-123', { disableDiagnostics: true });
-    expect(statsig.getClientInitializeResponse(statsigUser)).toEqual(
-      INIT_RESPONSE,
-    );
+    expect(statsig.getClientInitializeResponse(statsigUser)).toMatchSnapshot({
+      time: expect.any(Number),
+    });
 
     const on1 = await statsig.checkGate(statsigUser, 'partial_rollout_gate');
     expect(on1).toEqual(true);

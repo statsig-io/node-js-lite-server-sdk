@@ -1,5 +1,6 @@
 import DynamicConfig from './DynamicConfig';
 import { StatsigUninitializedError } from './Errors';
+import { ClientInitializeResponse } from './Evaluator';
 import { FeatureGate } from './FeatureGate';
 import { AdapterResponse, IDataAdapter } from './interfaces/IDataAdapter';
 import Layer from './Layer';
@@ -299,7 +300,7 @@ export const Statsig = {
    */
   getClientInitializeResponse(
     user: StatsigUser,
-  ): Record<string, unknown> | null {
+  ): ClientInitializeResponse | null {
     return this._enforceServer().getClientInitializeResponse(user);
   },
 

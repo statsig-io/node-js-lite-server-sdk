@@ -6,7 +6,7 @@ import {
   StatsigInvalidArgumentError,
   StatsigUninitializedError,
 } from './Errors';
-import Evaluator from './Evaluator';
+import Evaluator, { ClientInitializeResponse } from './Evaluator';
 import {
   FeatureGate,
   makeEmptyFeatureGate,
@@ -438,7 +438,7 @@ export default class StatsigServer {
 
   public getClientInitializeResponse(
     user: StatsigUser,
-  ): Record<string, unknown> | null {
+  ): ClientInitializeResponse | null {
     return this._errorBoundary.capture(
       () => {
         if (this._ready !== true) {

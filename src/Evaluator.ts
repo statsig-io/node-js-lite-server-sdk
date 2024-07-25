@@ -5,7 +5,7 @@ import { EvaluationDetails } from './EvaluationDetails';
 import SpecStore from './SpecStore';
 import { ExplicitStatsigOptions } from './StatsigOptions';
 import { StatsigUser } from './StatsigUser';
-import { notEmpty } from './utils/core';
+import { getSDKType, getSDKVersion, notEmpty } from './utils/core';
 import parseUserAgent from './utils/parseUserAgent';
 import StatsigFetcher from './utils/StatsigFetcher';
 
@@ -27,6 +27,20 @@ type InitializeResponse = {
   allocated_experiment_name?: string;
   explicit_parameters?: string[];
   undelegated_secondary_exposures?: Record<string, string>[];
+};
+
+export type ClientInitializeResponse = {
+  feature_gates: Record<string, InitializeResponse>;
+  dynamic_configs: Record<string, InitializeResponse>;
+  layer_configs: Record<string, InitializeResponse>;
+  sdkParams: Record<string, unknown>;
+  has_updates: boolean;
+  generator: 'statsig-node-lite-sdk';
+  sdkInfo: { sdkType: string; sdkVersion: string };
+  time: number;
+  evaluated_keys: Record<string, unknown>;
+  hash_used: 'sha256';
+  user: StatsigUser;
 };
 
 export default class Evaluator {
@@ -154,7 +168,7 @@ export default class Evaluator {
 
   public getClientInitializeResponse(
     user: StatsigUser,
-  ): Record<string, unknown> | null {
+  ): ClientInitializeResponse | null {
     if (!this.store.isServingChecks()) {
       return null;
     }
@@ -256,8 +270,11 @@ export default class Evaluator {
       sdkParams: {},
       has_updates: true,
       generator: 'statsig-node-lite-sdk',
-      time: 0, // set the time to 0 so this doesnt interfere with polling,
+      sdkInfo: { sdkType: getSDKType(), sdkVersion: getSDKVersion() },
+      time: this.store.getLastUpdateTime(),
       evaluated_keys: evaluatedKeys,
+      hash_used: 'sha256',
+      user: user,
     };
   }
 
@@ -414,7 +431,9 @@ export default class Evaluator {
     }
 
     const evaulation = this._eval(user, config);
-    evaulation.secondary_exposures = this._cleanExposures(evaulation.secondary_exposures);
+    evaulation.secondary_exposures = this._cleanExposures(
+      evaulation.secondary_exposures,
+    );
     if (evaulation.evaluation_details) {
       return evaulation;
     }

@@ -12,7 +12,6 @@ type NonNullableNested<T> = {
   [P in keyof T]: NonNullable<T[P]>;
 };
 
-const INIT_RESPONSE = require('./data/initialize_response.json');
 let postedLogs: { events: NonNullableNested<LogEventData>[] } = {
   events: [],
 };
@@ -69,9 +68,9 @@ describe('Verify e2e behavior of the SDK with mocked network', () => {
 
   test('Verify checkGate and exposure logs', async () => {
     await statsig.initialize('secret-123', { disableDiagnostics: true });
-    expect(statsig.getClientInitializeResponse(statsigUser)).toEqual(
-      INIT_RESPONSE,
-    );
+    expect(statsig.getClientInitializeResponse(statsigUser)).toMatchSnapshot({
+      time: expect.any(Number),
+    });
     const on1 = await statsig.checkGate(statsigUser, 'always_on_gate');
     expect(on1).toEqual(true);
 
