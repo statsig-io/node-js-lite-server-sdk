@@ -128,9 +128,9 @@ Object {
       },
     },
   },
-  "sdkInfo": Object {
+  "sdkInfo": ObjectContaining {
     "sdkType": "statsig-node-lite",
-    "sdkVersion": "0.2.2",
+    "sdkVersion": Any<String>,
   },
   "sdkParams": Object {},
   "time": Any<Number>,
@@ -269,9 +269,9 @@ Object {
       },
     },
   },
-  "sdkInfo": Object {
+  "sdkInfo": ObjectContaining {
     "sdkType": "statsig-node-lite",
-    "sdkVersion": "0.2.2",
+    "sdkVersion": Any<String>,
   },
   "sdkParams": Object {},
   "time": Any<Number>,

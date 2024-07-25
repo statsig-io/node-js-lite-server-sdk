@@ -68,6 +68,10 @@ describe('Verify e2e behavior of the SDK with mocked network', () => {
     await statsig.initialize('secret-123', { disableDiagnostics: true });
     expect(statsig.getClientInitializeResponse(statsigUser)).toMatchSnapshot({
       time: expect.any(Number),
+      sdkInfo: expect.objectContaining({
+        sdkType: 'statsig-node-lite',
+        sdkVersion: expect.any(String),
+      }),
     });
     const on1 = await statsig.checkGate(statsigUser, 'always_on_gate');
     expect(on1).toEqual(true);
@@ -235,6 +239,10 @@ describe('Verify e2e behavior of the SDK with mocked network', () => {
     await statsig.initialize('secret-123', { disableDiagnostics: true });
     expect(statsig.getClientInitializeResponse(statsigUser)).toMatchSnapshot({
       time: expect.any(Number),
+      sdkInfo: expect.objectContaining({
+        sdkType: 'statsig-node-lite',
+        sdkVersion: expect.any(String),
+      }),
     });
 
     const on1 = await statsig.checkGate(statsigUser, 'partial_rollout_gate');
