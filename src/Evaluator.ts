@@ -254,6 +254,8 @@ export default class Evaluator {
       evaluatedKeys['customIDs'] = user.customIDs;
     }
 
+    delete user.privateAttributes;
+
     return {
       feature_gates: Object.assign(
         {},
