@@ -2,6 +2,7 @@ import ConfigEvaluation from './ConfigEvaluation';
 import { ConfigCondition, ConfigRule, ConfigSpec } from './ConfigSpec';
 import Diagnostics from './Diagnostics';
 import { EvaluationDetails } from './EvaluationDetails';
+import { SecondaryExposure } from './LogEvent';
 import SpecStore from './SpecStore';
 import { ExplicitStatsigOptions } from './StatsigOptions';
 import { StatsigUser } from './StatsigUser';
@@ -400,13 +401,11 @@ export default class Evaluator {
     return output;
   }
 
-  private _cleanExposures(
-    exposures: Record<string, string>[],
-  ): Record<string, string>[] {
+  private _cleanExposures(exposures: SecondaryExposure[]): SecondaryExposure[] {
     const seen: Record<string, boolean> = {};
     return exposures
       .filter((exposure) => !exposure.gate.startsWith('segment:'))
-      .map((exposure: Record<string, string>) => {
+      .map((exposure) => {
         const key = `${exposure.gate}|${exposure.gateValue}|${exposure.ruleID}`;
         if (seen[key]) {
           return null;
@@ -460,7 +459,7 @@ export default class Evaluator {
       );
     }
 
-    let secondary_exposures: Record<string, string>[] = [];
+    let secondary_exposures: SecondaryExposure[] = [];
     for (let i = 0; i < config.rules.length; i++) {
       const rule = config.rules[i];
       const ruleResult = this._evalRule(user, rule);
@@ -515,7 +514,7 @@ export default class Evaluator {
   _evalDelegate(
     user: StatsigUser,
     rule: ConfigRule,
-    exposures: Record<string, string>[],
+    exposures: SecondaryExposure[],
   ) {
     if (rule.configDelegate == null) {
       return null;
@@ -560,7 +559,7 @@ export default class Evaluator {
   }
 
   _evalRule(user: StatsigUser, rule: ConfigRule) {
-    let secondaryExposures: Record<string, string>[] = [];
+    let secondaryExposures: SecondaryExposure[] = [];
     let pass = true;
 
     for (const condition of rule.conditions) {
@@ -598,7 +597,7 @@ export default class Evaluator {
   ): {
     passes: boolean;
     unsupported?: boolean;
-    exposures?: Record<string, string>[];
+    exposures?: SecondaryExposure[];
   } {
     let value = null;
     const field = condition.field;
@@ -635,7 +634,7 @@ export default class Evaluator {
         }
         const gateNames = target as string[];
         let value = false;
-        let exposures: Record<string, string>[] = [];
+        let exposures: SecondaryExposure[] = [];
         for (const gateName of gateNames) {
           const gateResult = this.checkGate(user, gateName as string);
           if (gateResult?.unsupported) {

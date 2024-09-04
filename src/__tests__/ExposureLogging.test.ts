@@ -1,4 +1,5 @@
 import Statsig, { StatsigUser } from '../index';
+import { SecondaryExposure } from '../LogEvent';
 import StatsigInstanceUtils from '../StatsigInstanceUtils';
 
 jest.mock('node-fetch', () => jest.fn());
@@ -15,6 +16,7 @@ describe('ExposureLogging', () => {
   let events: {
     eventName: string;
     metadata: { gate?: string; config?: string; isManualExposure?: string };
+    secondaryExposures: SecondaryExposure[];
   }[] = [];
 
   beforeEach(async () => {
@@ -89,6 +91,54 @@ describe('ExposureLogging', () => {
       expect(events[0].metadata.config).toEqual('a_layer');
       expect(events[0].metadata.isManualExposure).toBeUndefined();
       expect(events[0].eventName).toEqual('statsig::layer_exposure');
+    });
+  });
+
+  describe('secondary exposures', () => {
+    it('logs check gate secondary exposures', async () => {
+      await Statsig.checkGate(user, 'gate_in_holdout');
+      expect(events.length).toBe(1);
+      expect(events[0].secondaryExposures.length).toEqual(1)
+      expect(events[0].secondaryExposures[0].gate).toEqual('global_holdout')
+      expect(events[0].secondaryExposures[0].gateValue).toEqual("false")
+      expect(events[0].secondaryExposures[0].ruleID).toEqual("3QoA4ncNdVGBaMt3N1KYjz:0.50:1")
+    });
+
+    it('logs get feature gate secondary exposures', async () => {
+      await Statsig.getFeatureGate(user, 'gate_in_holdout');
+      expect(events.length).toBe(1);
+      expect(events[0].secondaryExposures.length).toEqual(1)
+      expect(events[0].secondaryExposures[0].gate).toEqual('global_holdout')
+      expect(events[0].secondaryExposures[0].gateValue).toEqual("false")
+      expect(events[0].secondaryExposures[0].ruleID).toEqual("3QoA4ncNdVGBaMt3N1KYjz:0.50:1")
+    });
+
+    it('logs config secondary exposures', async () => {
+      await Statsig.getConfig(user, 'config_in_holdout');
+      expect(events.length).toBe(1);
+      expect(events[0].secondaryExposures.length).toEqual(1)
+      expect(events[0].secondaryExposures[0].gate).toEqual('global_holdout')
+      expect(events[0].secondaryExposures[0].gateValue).toEqual("false")
+      expect(events[0].secondaryExposures[0].ruleID).toEqual("3QoA4ncNdVGBaMt3N1KYjz:0.50:1")
+    });
+
+    it('logs experiment secondary exposures', async () => {
+      await Statsig.getExperiment(user, 'exp_in_holdout');
+      expect(events.length).toBe(1);
+      expect(events[0].secondaryExposures.length).toEqual(1)
+      expect(events[0].secondaryExposures[0].gate).toEqual('global_holdout')
+      expect(events[0].secondaryExposures[0].gateValue).toEqual("false")
+      expect(events[0].secondaryExposures[0].ruleID).toEqual("3QoA4ncNdVGBaMt3N1KYjz:0.50:1")
+    });
+
+    it('logs layer secondary exposures', async () => {
+      const layer = await Statsig.getLayer(user, 'layer_in_holdout');
+      layer.get('a_bool', false);
+      expect(events.length).toBe(1);
+      expect(events[0].secondaryExposures.length).toEqual(1)
+      expect(events[0].secondaryExposures[0].gate).toEqual('global_holdout')
+      expect(events[0].secondaryExposures[0].gateValue).toEqual("false")
+      expect(events[0].secondaryExposures[0].ruleID).toEqual("3QoA4ncNdVGBaMt3N1KYjz:0.50:1")
     });
   });
 

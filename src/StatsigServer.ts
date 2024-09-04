@@ -687,6 +687,7 @@ export default class StatsigServer {
       evaluation.rule_id,
       evaluation.value === true,
       evaluation.group_name,
+      evaluation.secondary_exposures,
     );
   }
 

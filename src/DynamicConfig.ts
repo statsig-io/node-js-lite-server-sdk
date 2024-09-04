@@ -1,3 +1,4 @@
+import { SecondaryExposure } from './LogEvent';
 import { clone, getTypeOf } from './utils/core';
 
 export type OnDefaultValueFallback = (
@@ -15,7 +16,7 @@ export default class DynamicConfig {
   public value: Record<string, unknown>;
   private _ruleID: string;
   private _groupName: string | null;
-  private _secondaryExposures: Record<string, unknown>[];
+  private _secondaryExposures: SecondaryExposure[];
   private _onDefaultValueFallback: OnDefaultValueFallback | null = null;
 
   public constructor(
@@ -23,7 +24,7 @@ export default class DynamicConfig {
     value: Record<string, unknown> = {},
     ruleID: string = '',
     groupName: string | null = null,
-    secondaryExposures: Record<string, unknown>[] = [],
+    secondaryExposures: SecondaryExposure[] = [],
     onDefaultValueFallback: OnDefaultValueFallback | null = null,
   ) {
     if (typeof configName !== 'string' || configName.length === 0) {
@@ -100,7 +101,11 @@ export default class DynamicConfig {
     return this._groupName;
   }
 
-  _getSecondaryExposures(): Record<string, unknown>[] {
+  _getSecondaryExposures(): SecondaryExposure[] {
+    return this._secondaryExposures;
+  }
+  
+  getSecondaryExposures(): SecondaryExposure[] {
     return this._secondaryExposures;
   }
 }
