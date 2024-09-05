@@ -25,6 +25,7 @@ import { StatsigUser } from './StatsigUser';
 import StatsigFetcher from './utils/StatsigFetcher';
 import asyncify from './utils/asyncify';
 import { getStatsigMetadata, isUserIdentifiable } from './utils/core';
+import { HashingAlgorithm } from './utils/Hashing';
 
 const MAX_VALUE_SIZE = 64;
 const MAX_OBJ_SIZE = 2048;
@@ -47,6 +48,10 @@ export type LogEventObject = {
   value?: string | number | null;
   metadata?: Record<string, unknown> | null;
   time?: string | null;
+};
+
+export type ClientInitializeResponseOptions = {
+  hash?: HashingAlgorithm;
 };
 
 /**
@@ -438,6 +443,7 @@ export default class StatsigServer {
 
   public getClientInitializeResponse(
     user: StatsigUser,
+    options?: ClientInitializeResponseOptions,
   ): ClientInitializeResponse | null {
     return this._errorBoundary.capture(
       () => {
@@ -448,7 +454,10 @@ export default class StatsigServer {
         if (user.statsigEnvironment == null) {
           normalizedUser = normalizeUser(user, this._options);
         }
-        return this._evaluator.getClientInitializeResponse(normalizedUser);
+        return this._evaluator.getClientInitializeResponse(
+          normalizedUser,
+          options,
+        );
       },
       () => null,
     );

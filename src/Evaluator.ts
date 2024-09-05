@@ -5,8 +5,15 @@ import { EvaluationDetails } from './EvaluationDetails';
 import { SecondaryExposure } from './LogEvent';
 import SpecStore from './SpecStore';
 import { ExplicitStatsigOptions } from './StatsigOptions';
+import { ClientInitializeResponseOptions } from './StatsigServer';
 import { StatsigUser } from './StatsigUser';
 import { getSDKType, getSDKVersion, notEmpty } from './utils/core';
+import {
+  HashingAlgorithm,
+  hashString,
+  hashUnitIDForIDList,
+  sha256Hash,
+} from './utils/Hashing';
 import parseUserAgent from './utils/parseUserAgent';
 import StatsigFetcher from './utils/StatsigFetcher';
 
@@ -40,7 +47,7 @@ export type ClientInitializeResponse = {
   sdkInfo: { sdkType: string; sdkVersion: string };
   time: number;
   evaluated_keys: Record<string, unknown>;
-  hash_used: 'sha256';
+  hash_used: HashingAlgorithm;
   user: StatsigUser;
 };
 
@@ -169,6 +176,7 @@ export default class Evaluator {
 
   public getClientInitializeResponse(
     user: StatsigUser,
+    options?: ClientInitializeResponseOptions,
   ): ClientInitializeResponse | null {
     if (!this.store.isServingChecks()) {
       return null;
@@ -180,7 +188,7 @@ export default class Evaluator {
         }
         const res = this._eval(user, spec);
         return {
-          name: getHashedName(gate),
+          name: hashString(gate, options?.hash),
           value: res.unsupported ? false : res.value,
           rule_id: res.rule_id,
           secondary_exposures: this._cleanExposures(res.secondary_exposures),
@@ -191,7 +199,7 @@ export default class Evaluator {
     const configs = Object.entries(this.store.getAllConfigs()).map(
       ([config, spec]) => {
         const res = this._eval(user, spec);
-        const format = this._specToInitializeResponse(spec, res);
+        const format = this._specToInitializeResponse(spec, res, options?.hash);
         if (spec.entity !== 'dynamic_config' && spec.entity !== 'autotune') {
           format.is_user_in_experiment = this._isUserAllocatedToExperiment(
             user,
@@ -225,11 +233,14 @@ export default class Evaluator {
     const layers = Object.entries(this.store.getAllLayers()).map(
       ([layer, spec]) => {
         const res = this._eval(user, spec);
-        const format = this._specToInitializeResponse(spec, res);
+        const format = this._specToInitializeResponse(spec, res, options?.hash);
         format.explicit_parameters = spec.explicitParameters ?? [];
         if (res.config_delegate != null && res.config_delegate !== '') {
           const delegateSpec = this.store.getConfig(res.config_delegate);
-          format.allocated_experiment_name = getHashedName(res.config_delegate);
+          format.allocated_experiment_name = hashString(
+            res.config_delegate,
+            options?.hash,
+          );
 
           format.is_experiment_active = this._isExperimentActive(delegateSpec);
           format.is_user_in_experiment = this._isUserAllocatedToExperiment(
@@ -276,7 +287,7 @@ export default class Evaluator {
       sdkInfo: { sdkType: getSDKType(), sdkVersion: getSDKVersion() },
       time: this.store.getLastUpdateTime(),
       evaluated_keys: evaluatedKeys,
-      hash_used: 'sha256',
+      hash_used: options?.hash ?? 'sha256',
       user: user,
     };
   }
@@ -383,9 +394,10 @@ export default class Evaluator {
   private _specToInitializeResponse(
     spec: ConfigSpec,
     res: ConfigEvaluation,
+    hash?: HashingAlgorithm,
   ): InitializeResponse {
     const output: InitializeResponse = {
-      name: getHashedName(spec.name),
+      name: hashString(spec.name, hash),
       value: res.unsupported ? {} : res.json_value,
       group: res.rule_id,
       rule_id: res.rule_id,
@@ -887,26 +899,13 @@ export default class Evaluator {
 
 const hashLookupTable: Map<string, bigint> = new Map();
 
-function computeUserHash(userHash: string) {
+export function computeUserHash(userHash: string) {
   const existingHash = hashLookupTable.get(userHash);
   if (existingHash) {
     return existingHash;
   }
 
-  let hash: bigint;
-  const buffer = shajs('sha256').update(userHash).digest();
-  if (buffer.readBigUInt64BE) {
-    hash = buffer.readBigUInt64BE();
-  }
-
-  const ab = new ArrayBuffer(buffer.length);
-  const view = new Uint8Array(ab);
-  for (let ii = 0; ii < buffer.length; ii++) {
-    view[ii] = buffer[ii];
-  }
-
-  const dv = new DataView(ab);
-  hash = dv.getBigUint64(0, false);
+  const hash = sha256Hash(userHash).getBigUint64(0, false);
 
   if (hashLookupTable.size > 100000) {
     hashLookupTable.clear();
@@ -914,17 +913,6 @@ function computeUserHash(userHash: string) {
 
   hashLookupTable.set(userHash, hash);
   return hash;
-}
-
-function getHashedName(name: string) {
-  return shajs('sha256').update(name).digest('base64');
-}
-
-function hashUnitIDForIDList(unitID: string) {
-  if (typeof unitID !== 'string' || unitID == null) {
-    return '';
-  }
-  return getHashedName(unitID).substr(0, 8);
 }
 
 function getFromUser(user: StatsigUser, field: string): any | null {

@@ -12,7 +12,10 @@ import {
   InitStrategy,
   StatsigOptions,
 } from './StatsigOptions';
-import StatsigServer, { LogEventObject } from './StatsigServer';
+import StatsigServer, {
+  ClientInitializeResponseOptions,
+  LogEventObject,
+} from './StatsigServer';
 import { StatsigUser } from './StatsigUser';
 
 export {
@@ -300,8 +303,9 @@ export const Statsig = {
    */
   getClientInitializeResponse(
     user: StatsigUser,
+    options?: ClientInitializeResponseOptions,
   ): ClientInitializeResponse | null {
-    return this._enforceServer().getClientInitializeResponse(user);
+    return this._enforceServer().getClientInitializeResponse(user, options);
   },
 
   /**
