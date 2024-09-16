@@ -5,6 +5,7 @@ Object {
   "dynamic_configs": Object {
     "86mj1zUC35KaWoOqpe8SKEHQjRlXOzdLfiTJU/iU+vc=": Object {
       "group": "5yQbPMfmKQdiRV35hS3B2l",
+      "group_name": "Control",
       "is_device_based": false,
       "is_experiment_active": true,
       "is_user_in_experiment": true,
@@ -27,6 +28,7 @@ Object {
     },
     "RMv0YJlLOBe7cY7HgZ3Jox34R0Wrk7jLv3DZyBETA7I=": Object {
       "group": "4lInPNRUnjUzaWNkEWLFA9",
+      "group_name": "statsig emails",
       "is_device_based": false,
       "name": "RMv0YJlLOBe7cY7HgZ3Jox34R0Wrk7jLv3DZyBETA7I=",
       "rule_id": "4lInPNRUnjUzaWNkEWLFA9",
@@ -39,6 +41,7 @@ Object {
     },
     "S52jGlsKiXpNsVbAbe/hcTxLnaHOVT+rNsVP/ibJitY=": Object {
       "group": "prestart",
+      "group_name": "Unstarted",
       "is_device_based": false,
       "name": "S52jGlsKiXpNsVbAbe/hcTxLnaHOVT+rNsVP/ibJitY=",
       "rule_id": "prestart",
@@ -47,6 +50,7 @@ Object {
     },
     "n4bQgYhMfWWaL+qgxVrQFaO/TxsrC4Is0V1sFbDwCgg=": Object {
       "group": "prestart",
+      "group_name": "Unstarted",
       "is_device_based": false,
       "is_experiment_active": false,
       "is_user_in_experiment": false,
@@ -103,6 +107,7 @@ Object {
       "allocated_experiment_name": "BYdogc4bXxkqfoDOnfjlh1Ij+5QKjNp0rACKdwBL+vc=",
       "explicit_parameters": Array [],
       "group": "",
+      "group_name": "everyone",
       "is_device_based": false,
       "is_experiment_active": false,
       "is_user_in_experiment": false,
@@ -116,6 +121,7 @@ Object {
       "allocated_experiment_name": "86mj1zUC35KaWoOqpe8SKEHQjRlXOzdLfiTJU/iU+vc=",
       "explicit_parameters": Array [],
       "group": "5yQbPMfmKQdiRV35hS3B2l",
+      "group_name": "Control",
       "is_device_based": false,
       "is_experiment_active": true,
       "is_user_in_experiment": true,

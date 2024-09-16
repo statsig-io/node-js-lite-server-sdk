@@ -35,6 +35,7 @@ type InitializeResponse = {
   allocated_experiment_name?: string;
   explicit_parameters?: string[];
   undelegated_secondary_exposures?: Record<string, string>[];
+  group_name?: string | null;
 };
 
 export type ClientInitializeResponse = {
@@ -405,6 +406,9 @@ export default class Evaluator {
         spec.idType != null && spec.idType.toLowerCase() === 'stableid',
       secondary_exposures: this._cleanExposures(res.secondary_exposures),
     };
+    if (res.group_name != null && res.group_name !== '') {
+      output.group_name = res.group_name;
+    }
 
     if (res.explicit_parameters) {
       output.explicit_parameters = res.explicit_parameters;
@@ -543,6 +547,8 @@ export default class Evaluator {
     delegatedResult.secondary_exposures = exposures.concat(
       delegatedResult.secondary_exposures,
     );
+    delegatedResult.group_name =
+      delegatedResult.group_name ?? rule.groupName ?? null;
     return delegatedResult;
   }
 
