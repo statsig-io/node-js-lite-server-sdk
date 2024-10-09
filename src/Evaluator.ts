@@ -36,6 +36,7 @@ type InitializeResponse = {
   explicit_parameters?: string[];
   undelegated_secondary_exposures?: Record<string, string>[];
   group_name?: string | null;
+  id_type?: string | null;
 };
 
 export type ClientInitializeResponse = {
@@ -193,6 +194,7 @@ export default class Evaluator {
           value: res.unsupported ? false : res.value,
           rule_id: res.rule_id,
           secondary_exposures: this._cleanExposures(res.secondary_exposures),
+          id_type: spec.idType,
         };
       })
       .filter((item) => item !== null);
@@ -201,6 +203,9 @@ export default class Evaluator {
       ([config, spec]) => {
         const res = this._eval(user, spec);
         const format = this._specToInitializeResponse(spec, res, options?.hash);
+        if (spec.idType != null) {
+          format.id_type = spec.idType;
+        }
         if (spec.entity !== 'dynamic_config' && spec.entity !== 'autotune') {
           format.is_user_in_experiment = this._isUserAllocatedToExperiment(
             user,

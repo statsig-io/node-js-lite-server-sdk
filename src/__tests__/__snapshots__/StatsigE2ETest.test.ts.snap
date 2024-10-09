@@ -6,6 +6,7 @@ Object {
     "86mj1zUC35KaWoOqpe8SKEHQjRlXOzdLfiTJU/iU+vc=": Object {
       "group": "5yQbPMfmKQdiRV35hS3B2l",
       "group_name": "Control",
+      "id_type": "userID",
       "is_device_based": false,
       "is_experiment_active": true,
       "is_user_in_experiment": true,
@@ -29,6 +30,7 @@ Object {
     "RMv0YJlLOBe7cY7HgZ3Jox34R0Wrk7jLv3DZyBETA7I=": Object {
       "group": "4lInPNRUnjUzaWNkEWLFA9",
       "group_name": "statsig emails",
+      "id_type": "userID",
       "is_device_based": false,
       "name": "RMv0YJlLOBe7cY7HgZ3Jox34R0Wrk7jLv3DZyBETA7I=",
       "rule_id": "4lInPNRUnjUzaWNkEWLFA9",
@@ -42,6 +44,7 @@ Object {
     "S52jGlsKiXpNsVbAbe/hcTxLnaHOVT+rNsVP/ibJitY=": Object {
       "group": "prestart",
       "group_name": "Unstarted",
+      "id_type": "userID",
       "is_device_based": false,
       "name": "S52jGlsKiXpNsVbAbe/hcTxLnaHOVT+rNsVP/ibJitY=",
       "rule_id": "prestart",
@@ -51,6 +54,7 @@ Object {
     "n4bQgYhMfWWaL+qgxVrQFaO/TxsrC4Is0V1sFbDwCgg=": Object {
       "group": "prestart",
       "group_name": "Unstarted",
+      "id_type": "userID",
       "is_device_based": false,
       "is_experiment_active": false,
       "is_user_in_experiment": false,
@@ -65,24 +69,28 @@ Object {
   },
   "feature_gates": Object {
     "KfJ1sBBfnL8SwCIxTAyfnj6DiWIyR7uSqimZADQi4Jg=": Object {
+      "id_type": "userID",
       "name": "KfJ1sBBfnL8SwCIxTAyfnj6DiWIyR7uSqimZADQi4Jg=",
       "rule_id": "",
       "secondary_exposures": Array [],
       "value": false,
     },
     "OqAaBJ4fpvUSJVicA+jDgotK2OKGJmKxbu+Icyq30P4=": Object {
+      "id_type": "userID",
       "name": "OqAaBJ4fpvUSJVicA+jDgotK2OKGJmKxbu+Icyq30P4=",
       "rule_id": "2DWuOvXQZWKvoaNm27dqcs",
       "secondary_exposures": Array [],
       "value": true,
     },
     "rGc+6rvo48V4j1sXkvsGHeSfJfY7kMp1OHfQnw+3XbI=": Object {
+      "id_type": "userID",
       "name": "rGc+6rvo48V4j1sXkvsGHeSfJfY7kMp1OHfQnw+3XbI=",
       "rule_id": "2DWuOvXQZWKvoaNm27dqcs",
       "secondary_exposures": Array [],
       "value": true,
     },
     "srhBjpz3NFHATrntxEsdHManNXJQZawtJUkQ3s0XT3Q=": Object {
+      "id_type": "userID",
       "name": "srhBjpz3NFHATrntxEsdHManNXJQZawtJUkQ3s0XT3Q=",
       "rule_id": "3jdTW54SQWbbxFFZJe7wYZ",
       "secondary_exposures": Array [],
