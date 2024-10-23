@@ -25,6 +25,9 @@
     "url": "https://github.com/statsig-io/node-js-lite-server-sdk/issues"
   },
   "homepage": "https://www.statsig.com",
+  "files": [
+    "dist"
+  ],
   "dependencies": {
     "node-fetch": "^2.6.7",
     "ua-parser-js": "^1.0.2",
