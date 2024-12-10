@@ -702,7 +702,7 @@ export default class Evaluator {
       case 'user_bucket': {
         const salt = condition.additionalValues?.salt;
         const userHash = computeUserHash(
-          salt + '.' + this._getUnitID(user, idType) ?? '',
+          salt + '.' + (this._getUnitID(user, idType) ?? ''),
         );
         value = Number(userHash % BigInt(USER_BUCKET_COUNT));
         break;
@@ -879,6 +879,54 @@ export default class Evaluator {
         value = hashUnitIDForIDList(value);
         const inList = typeof list === 'object' && list[value] === true;
         evalResult = op === 'in_segment_list' ? inList : !inList;
+        break;
+      }
+      case 'array_contains_any': {
+        if (!Array.isArray(target)) {
+          evalResult = false;
+          break;
+        }
+        if (!Array.isArray(value)) {
+          evalResult = false;
+          break;
+        }
+        evalResult = arrayHasValue(value as unknown[], target as string[]);
+        break;
+      }
+      case 'array_contains_none': {
+        if (!Array.isArray(target)) {
+          evalResult = false;
+          break;
+        }
+        if (!Array.isArray(value)) {
+          evalResult = false;
+          break;
+        }
+        evalResult = !arrayHasValue(value as unknown[], target as string[]);
+        break;
+      }
+      case 'array_contains_all': {
+        if (!Array.isArray(target)) {
+          evalResult = false;
+          break;
+        }
+        if (!Array.isArray(value)) {
+          evalResult = false;
+          break;
+        }
+        evalResult = arrayHasAllValues(value as unknown[], target as string[]);
+        break;
+      }
+      case 'not_array_contains_all': {
+        if (!Array.isArray(target)) {
+          evalResult = false;
+          break;
+        }
+        if (!Array.isArray(value)) {
+          evalResult = false;
+          break;
+        }
+        evalResult = !arrayHasAllValues(value as unknown[], target as string[]);
         break;
       }
       default:
@@ -1122,4 +1170,33 @@ function arrayAny(
     }
   }
   return false;
+}
+
+function arrayHasValue(value: unknown[], target: string[] | number[]): boolean {
+  const valueSet = new Set(value);
+  for (let i = 0; i < target.length; i++) {
+    if (
+      valueSet.has(target[i]) ||
+      valueSet.has(parseInt(target[i] as string))
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function arrayHasAllValues(
+  value: unknown[],
+  target: string[] | number[],
+): boolean {
+  const valueSet = new Set(value);
+  for (let i = 0; i < target.length; i++) {
+    if (
+      !valueSet.has(target[i]) &&
+      !valueSet.has(parseInt(target[i] as string))
+    ) {
+      return false;
+    }
+  }
+  return true;
 }
