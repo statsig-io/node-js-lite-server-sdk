@@ -33,6 +33,7 @@ Object {
       "id_type": "userID",
       "is_device_based": false,
       "name": "RMv0YJlLOBe7cY7HgZ3Jox34R0Wrk7jLv3DZyBETA7I=",
+      "passed": true,
       "rule_id": "4lInPNRUnjUzaWNkEWLFA9",
       "secondary_exposures": Array [],
       "value": Object {
@@ -188,6 +189,7 @@ Object {
       "id_type": "userID",
       "is_device_based": false,
       "name": "RMv0YJlLOBe7cY7HgZ3Jox34R0Wrk7jLv3DZyBETA7I=",
+      "passed": true,
       "rule_id": "4lInPNRUnjUzaWNkEWLFA9",
       "secondary_exposures": Array [],
       "value": Object {
