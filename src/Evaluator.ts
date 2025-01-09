@@ -1,21 +1,22 @@
-import ConfigEvaluation from './ConfigEvaluation';
 import { ConfigCondition, ConfigRule, ConfigSpec } from './ConfigSpec';
-import Diagnostics from './Diagnostics';
-import { EvaluationDetails } from './EvaluationDetails';
-import { SecondaryExposure } from './LogEvent';
-import SpecStore from './SpecStore';
-import { ExplicitStatsigOptions } from './StatsigOptions';
-import { ClientInitializeResponseOptions } from './StatsigServer';
-import { StatsigUser } from './StatsigUser';
-import { getSDKType, getSDKVersion, notEmpty } from './utils/core';
 import {
   HashingAlgorithm,
   hashString,
   hashUnitIDForIDList,
   sha256Hash,
 } from './utils/Hashing';
-import parseUserAgent from './utils/parseUserAgent';
+import { getSDKType, getSDKVersion, notEmpty } from './utils/core';
+
+import { ClientInitializeResponseOptions } from './StatsigServer';
+import ConfigEvaluation from './ConfigEvaluation';
+import Diagnostics from './Diagnostics';
+import { EvaluationDetails } from './EvaluationDetails';
+import { ExplicitStatsigOptions } from './StatsigOptions';
+import { SecondaryExposure } from './LogEvent';
+import SpecStore from './SpecStore';
 import StatsigFetcher from './utils/StatsigFetcher';
+import { StatsigUser } from './StatsigUser';
+import parseUserAgent from './utils/parseUserAgent';
 
 const CONDITION_SEGMENT_COUNT = 10 * 1000;
 const USER_BUCKET_COUNT = 1000;
@@ -475,6 +476,9 @@ export default class Evaluator {
         null,
         [],
         config.defaultValue as Record<string, unknown>,
+        null, // explicit_parameters
+        null, // config_delegate
+        config.version,
       );
     }
 
@@ -486,6 +490,7 @@ export default class Evaluator {
         return ConfigEvaluation.unsupported(
           this.store.getLastUpdateTime(),
           this.store.getInitialUpdateTime(),
+          config.version,
         );
       }
 
@@ -514,6 +519,7 @@ export default class Evaluator {
             : (config.defaultValue as Record<string, unknown>),
           config.explicitParameters,
           ruleResult.config_delegate,
+          config.version,
         );
         evaluation.setIsExperimentGroup(ruleResult.is_experiment_group);
         return evaluation;
@@ -527,6 +533,8 @@ export default class Evaluator {
       secondary_exposures,
       config.defaultValue as Record<string, unknown>,
       config.explicitParameters,
+      null, // config_delegate
+      config.version,
     );
   }
 
@@ -589,6 +597,7 @@ export default class Evaluator {
         return ConfigEvaluation.unsupported(
           this.store.getLastUpdateTime(),
           this.store.getInitialUpdateTime(),
+          undefined,
         );
       }
 

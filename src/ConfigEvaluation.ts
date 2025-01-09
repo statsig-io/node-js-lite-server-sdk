@@ -13,6 +13,7 @@ export default class ConfigEvaluation {
   public is_experiment_group: boolean;
   public group_name: string | null;
   public evaluation_details: EvaluationDetails | undefined;
+  public configVersion?: number | undefined;
 
   constructor(
     value: boolean,
@@ -22,6 +23,7 @@ export default class ConfigEvaluation {
     json_value: Record<string, unknown> | boolean = {},
     explicit_parameters: string[] | null = null,
     config_delegate: string | null = null,
+    configVersion?: number,
     unsupported = false,
   ) {
     this.value = value;
@@ -39,6 +41,7 @@ export default class ConfigEvaluation {
     this.explicit_parameters = explicit_parameters;
     this.is_experiment_group = false;
     this.group_name = group_name;
+    this.configVersion = configVersion;
   }
 
   public withEvaluationDetails(
@@ -52,7 +55,11 @@ export default class ConfigEvaluation {
     this.is_experiment_group = isExperimentGroup;
   }
 
-  public static unsupported(configSyncTime: number, initialUpdateTime: number) {
+  public static unsupported(
+    configSyncTime: number,
+    initialUpdateTime: number,
+    version: number | undefined,
+  ) {
     return new ConfigEvaluation(
       false,
       '',
@@ -61,6 +68,7 @@ export default class ConfigEvaluation {
       {},
       undefined,
       undefined,
+      version,
       true,
     ).withEvaluationDetails(
       EvaluationDetails.unsupported(configSyncTime, initialUpdateTime),

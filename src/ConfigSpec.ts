@@ -10,6 +10,7 @@ export class ConfigSpec {
   public explicitParameters: string[] | null;
   public hasSharedParams: boolean;
   public isActive?: boolean;
+  public version?: number;
 
   constructor(specJSON: Record<string, unknown>) {
     this.name = specJSON.name as string;
@@ -21,6 +22,9 @@ export class ConfigSpec {
     this.rules = this.parseRules(specJSON.rules);
     this.entity = specJSON.entity as string;
     this.explicitParameters = specJSON.explicitParameters as string[];
+    if (specJSON.version != null) {
+      this.version = specJSON.version as number;
+    }
     if (specJSON.isActive !== null) {
       this.isActive = specJSON.isActive as boolean;
     }

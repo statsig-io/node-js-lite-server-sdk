@@ -1,12 +1,14 @@
 const { getStatsigMetadata, poll } = require('./utils/core');
-import ConfigEvaluation from './ConfigEvaluation';
-import { Marker } from './Diagnostics';
-import { StatsigLocalModeNetworkError } from './Errors';
-import { EvaluationDetails } from './EvaluationDetails';
+
 import LogEvent, { LogEventData, SecondaryExposure } from './LogEvent';
+
+import ConfigEvaluation from './ConfigEvaluation';
+import { EvaluationDetails } from './EvaluationDetails';
 import { ExplicitStatsigOptions } from './StatsigOptions';
-import { StatsigUser } from './StatsigUser';
+import { Marker } from './Diagnostics';
 import StatsigFetcher from './utils/StatsigFetcher';
+import { StatsigLocalModeNetworkError } from './Errors';
+import { StatsigUser } from './StatsigUser';
 
 const CONFIG_EXPOSURE_EVENT = 'config_exposure';
 const LAYER_EXPOSURE_EVENT = 'layer_exposure';
@@ -166,6 +168,10 @@ export default class LogEventProcessor {
       ruleID: evaluation.rule_id,
     };
 
+    if (evaluation.configVersion != null) {
+      metadata['configVersion'] = String(evaluation.configVersion);
+    }
+
     this.maybeAddManualExposureFlagToMetadata(metadata, isManualExposure);
 
     this.safeAddEvaulationDetailsToEvent(
@@ -190,7 +196,12 @@ export default class LogEventProcessor {
     const metadata: Record<string, unknown> = {
       config: configName,
       ruleID: evaluation.rule_id,
+      rulePassed: String(evaluation.value),
     };
+
+    if (evaluation.configVersion != null) {
+      metadata['configVersion'] = String(evaluation.configVersion);
+    }
 
     this.maybeAddManualExposureFlagToMetadata(metadata, isManualExposure);
 
@@ -230,6 +241,10 @@ export default class LogEventProcessor {
       parameterName,
       isExplicitParameter: String(isExplicit),
     };
+
+    if (evaluation.configVersion != null) {
+      metadata['configVersion'] = String(evaluation.configVersion);
+    }
 
     this.maybeAddManualExposureFlagToMetadata(metadata, isManualExposure);
 
