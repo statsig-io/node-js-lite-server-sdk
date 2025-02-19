@@ -3,7 +3,12 @@ let nodeFetch: (...args) => Promise<Response> = null;
 // @ts-ignore
 if (typeof EdgeRuntime !== 'string') {
   try {
-    nodeFetch = require('node-fetch');
+    const obj = require('node-fetch');
+    if (typeof obj === 'function') {
+      nodeFetch = obj;
+    } else if (typeof obj.default === 'function') {
+      nodeFetch = obj.default;
+    }
   } catch (err) {
     // Ignore
   }
@@ -13,8 +18,7 @@ if (typeof EdgeRuntime !== 'string') {
 export default function safeFetch(...args): Promise<Response> {
   if (nodeFetch) {
     return nodeFetch(...args);
-  } else {
-    // @ts-ignore
-    return fetch(...args);
   }
+  // @ts-ignore
+  return fetch(...args);
 }
