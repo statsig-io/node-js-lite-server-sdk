@@ -68,6 +68,10 @@ describe('Test local mode with overrides', () => {
       statsig.checkGate({ userID: 'new_user' }, 'override_gate'),
     ).resolves.toEqual(true);
 
+    statsig.clearAllGateOverrides();
+    expect(statsig.checkGate(userOne, 'override_gate')).resolves.toEqual(false);
+    expect(statsig.checkGate(userTwo, 'override_gate')).resolves.toEqual(false);
+
     // non boolean wont override
     // @ts-ignore
     statsig.overrideGate('different_gate', 'not a boolean');
@@ -120,6 +124,12 @@ describe('Test local mode with overrides', () => {
     );
     expect(u3config.getValue()).toEqual({ all: true });
 
+    statsig.clearAllConfigOverrides();
+    u1config = await statsig.getConfig(userOne, 'override_config');
+    expect(u1config.getValue()).toEqual({});
+    u2config = await statsig.getConfig(userTwo, 'override_config');
+    expect(u2config.getValue()).toEqual({});
+
     // non objects wont override
     // @ts-ignore
     statsig.overrideConfig('different_config', 'not an object');
@@ -162,6 +172,11 @@ describe('Test local mode with overrides', () => {
 
       layer = await statsig.getLayer({ userID: 'b-user' }, 'a_layer');
       expect(layer.get('a_param', 'fallback')).toEqual('a_value');
+
+      statsig.overrideLayer('a_layer', { a_param: 'a_value' }, 'a-user');
+      statsig.clearAllLayerOverrides();
+      layer = await statsig.getLayer({ userID: 'a-user' }, 'a_layer');
+      expect(layer.get('a_param', 'fallback')).toEqual('fallback');
     });
   });
 });
