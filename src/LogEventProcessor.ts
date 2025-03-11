@@ -36,6 +36,7 @@ export default class LogEventProcessor {
   private loggedErrors: Set<string>;
   private deduper: Set<string>;
   private deduperTimer: NodeJS.Timer | null;
+  private _nonExposedChecks: Record<string, number> = {};
 
   public constructor(fetcher: StatsigFetcher, options: ExplicitStatsigOptions) {
     this.options = options;
@@ -80,6 +81,8 @@ export default class LogEventProcessor {
   }
 
   public async flush(fireAndForget = false): Promise<void> {
+    this._appendAndResetNonExposedChecks();
+
     if (this.queue.length === 0) {
       return Promise.resolve();
     }
@@ -154,6 +157,22 @@ export default class LogEventProcessor {
     } else {
       this.log(event);
     }
+  }
+
+  public incrementNonExposedChecks(name: string) {
+    const current = this._nonExposedChecks[name] ?? 0;
+    this._nonExposedChecks[name] = current + 1;
+  }
+
+  private _appendAndResetNonExposedChecks() {
+    if (Object.keys(this._nonExposedChecks).length === 0) {
+      return;
+    }
+    const event = new LogEvent(INTERNAL_EVENT_PREFIX + 'non_exposed_checks');
+    event.setMetadata({ checks: { ...this._nonExposedChecks } });
+    this.log(event);
+
+    this._nonExposedChecks = {};
   }
 
   public logGateExposure(

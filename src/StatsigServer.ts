@@ -701,6 +701,8 @@ export default class StatsigServer {
         evaluation,
         ExposureCause.Automatic,
       );
+    } else {
+      this._logger.incrementNonExposedChecks(gateName);
     }
 
     return makeFeatureGate(
@@ -759,6 +761,8 @@ export default class StatsigServer {
         evaluation,
         ExposureCause.Automatic,
       );
+    } else {
+      this._logger.incrementNonExposedChecks(configName);
     }
 
     return config;
@@ -788,6 +792,10 @@ export default class StatsigServer {
         ExposureCause.Automatic,
       );
     };
+
+    if (exposureLogging === ExposureLogging.Disabled) {
+      this._logger.incrementNonExposedChecks(layerName);
+    }
 
     return new Layer(
       layerName,

@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: cache .npm
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: npm
         with:
