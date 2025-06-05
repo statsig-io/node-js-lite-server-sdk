@@ -42,6 +42,26 @@ export default class StatsigFetcher {
     backoff: number | RetryBackoffFunc = 1000,
     isRetrying = false,
   ): Promise<Response> {
+    return this.request('POST', url, body, retries, backoff, isRetrying);
+  }
+
+  public get(
+    url: string,
+    retries: number = 0,
+    backoff: number | RetryBackoffFunc = 1000,
+    isRetrying = false,
+  ): Promise<Response> {
+    return this.request('GET', url, undefined, retries, backoff, isRetrying);
+  }
+
+  public request(
+    method: 'GET' | 'POST',
+    url: string,
+    body?: Record<string, unknown>,
+    retries: number = 0,
+    backoff: number | RetryBackoffFunc = 1000,
+    isRetrying = false,
+  ): Promise<Response> {
     if (this.localMode) {
       return Promise.reject(new StatsigLocalModeNetworkError());
     }
@@ -66,9 +86,8 @@ export default class StatsigFetcher {
         ? applyBackoffMultiplier(backoff)
         : backoff(retries);
 
-    const params = {
-      method: 'POST',
-      body: JSON.stringify(body),
+    const params: Record<string, unknown> = {
+      method,
       headers: {
         'Content-type': 'application/json; charset=UTF-8',
         'STATSIG-API-KEY': this.sdkKey,
@@ -78,10 +97,13 @@ export default class StatsigFetcher {
         'STATSIG-SDK-VERSION': getSDKVersion(),
       },
     };
+    if (body != null) {
+      params['body'] = JSON.stringify(body);
+    }
     return safeFetch(url, params)
       .then((res) => {
         if ((!res.ok || retryStatusCodes.includes(res.status)) && retries > 0) {
-          return this._retry(url, body, retries - 1, backoffAdjusted);
+          return this._retry(method, url, body, retries - 1, backoffAdjusted);
         } else if (!res.ok) {
           return Promise.reject(
             new Error(
@@ -93,7 +115,7 @@ export default class StatsigFetcher {
       })
       .catch((e) => {
         if (retries > 0) {
-          return this._retry(url, body, retries - 1, backoffAdjusted);
+          return this._retry(method, url, body, retries - 1, backoffAdjusted);
         }
         return Promise.reject(e);
       })
@@ -116,8 +138,9 @@ export default class StatsigFetcher {
   }
 
   private _retry(
+    method: 'GET' | 'POST',
     url: string,
-    body: Record<string, unknown>,
+    body: Record<string, unknown> | undefined,
     retries: number,
     backoff: number,
   ): Promise<Response> {
@@ -125,7 +148,7 @@ export default class StatsigFetcher {
       this.pendingTimers.push(
         setTimeout(() => {
           this.leakyBucket[url] = Math.max(this.leakyBucket[url] - 1, 0);
-          this.post(url, body, retries, backoff, true)
+          this.request(method, url, body, retries, backoff, true)
             .then(resolve)
             .catch(reject);
         }, backoff).unref(),

@@ -81,6 +81,7 @@ export default class StatsigServer {
       options: this._options,
     });
     this._evaluator = new Evaluator(
+      this._secretKey,
       this._fetcher,
       this._options,
       this._diagnostics,
@@ -850,45 +851,6 @@ export default class StatsigServer {
     }
 
     return result;
-  }
-
-  private _fetchConfig(
-    user: StatsigUser,
-    name: string,
-    exposureLogging: ExposureLogging,
-  ): Promise<DynamicConfig> {
-    return this._fetcher
-      .dispatch(
-        this._options.api + '/get_config',
-        {
-          user: user,
-          configName: name,
-          statsigMetadata: getStatsigMetadata({
-            exposureLoggingDisabled:
-              exposureLogging === ExposureLogging.Disabled,
-          }),
-        },
-        5000,
-      )
-      .then((res) => {
-        // @ts-ignore
-        return res.json();
-      })
-      .then((resJSON) => {
-        return Promise.resolve(
-          new DynamicConfig(
-            name,
-            resJSON.value,
-            resJSON.rule_id,
-            resJSON.groupName,
-            [],
-            this._makeOnDefaultValueFallbackFunction(user),
-          ),
-        );
-      })
-      .catch(() => {
-        return Promise.resolve(new DynamicConfig(name));
-      });
   }
 
   private _makeOnDefaultValueFallbackFunction(

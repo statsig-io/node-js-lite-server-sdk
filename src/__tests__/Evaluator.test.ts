@@ -243,7 +243,11 @@ describe('Test condition evaluation', () => {
   ]
 
   const fetcher = new StatsigFetcher('secret-123', OptionsWithDefaults({}));
-  const mockedEvaluator = new Evaluator(fetcher, OptionsWithDefaults({}));
+  const mockedEvaluator = new Evaluator(
+    'secret-123',
+    fetcher,
+    OptionsWithDefaults({}),
+  );
   jest
     .spyOn(mockedEvaluator, 'checkGate')
     .mockImplementation((user, gateName) => {
@@ -269,6 +273,7 @@ describe('Test condition evaluation', () => {
   it('works', () => {
     const network = new StatsigFetcher('secret-123', OptionsWithDefaults({}));
     const store = new SpecStore(
+      'secret-123',
       network,
       OptionsWithDefaults({ api: 'https://statsigapi.net/v1' }),
     );
@@ -531,6 +536,7 @@ describe('testing checkGate and getConfig', () => {
     const network = new StatsigFetcher('secret-123', OptionsWithDefaults({}));
 
     evaluator = new Evaluator(
+      'secret-123',
       network,
       OptionsWithDefaults({ api: 'https://statsigapi.net/v1' }),
       diagnostics,

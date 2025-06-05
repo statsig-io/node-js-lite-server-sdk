@@ -68,11 +68,12 @@ export default class Evaluator {
   private store: SpecStore;
 
   public constructor(
+    sdkKey: string,
     fetcher: StatsigFetcher,
     options: ExplicitStatsigOptions,
     diagnostics: Diagnostics,
   ) {
-    this.store = new SpecStore(fetcher, options, diagnostics);
+    this.store = new SpecStore(sdkKey, fetcher, options, diagnostics);
     this.gateOverrides = {};
     this.configOverrides = {};
     this.layerOverrides = {};

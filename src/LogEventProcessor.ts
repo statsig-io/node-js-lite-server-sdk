@@ -9,6 +9,7 @@ import { Marker } from './Diagnostics';
 import StatsigFetcher from './utils/StatsigFetcher';
 import { StatsigLocalModeNetworkError } from './Errors';
 import { StatsigUser } from './StatsigUser';
+import { DEFAULT_API } from './SpecStore';
 
 const CONFIG_EXPOSURE_EVENT = 'config_exposure';
 const LAYER_EXPOSURE_EVENT = 'layer_exposure';
@@ -94,7 +95,7 @@ export default class LogEventProcessor {
     };
     return this.fetcher
       .post(
-        this.options.api + '/log_event',
+        (this.options.api ?? DEFAULT_API) + '/log_event',
         body,
         fireAndForget ? 0 : this.options.postLogsRetryLimit,
         this.options.postLogsRetryBackoff,

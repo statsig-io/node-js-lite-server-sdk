@@ -96,7 +96,7 @@ describe('Verify behavior of SpecStore', () => {
     options.rulesetsSyncIntervalMs = 1000;
     options.idListsSyncIntervalMs = 1000;
 
-    store = new SpecStore(net, options, diagnostics);
+    store = new SpecStore('secret-', net, options, diagnostics);
 
     jest.spyOn(global.Date, 'now').mockImplementation(() => now);
   });

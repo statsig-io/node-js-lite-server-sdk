@@ -44,7 +44,7 @@ describe('Verify behavior of top level index functions', () => {
   });
 
   test('Test retries', async () => {
-    const spy = jest.spyOn(fetcher, 'post');
+    const spy = jest.spyOn(fetcher, 'request');
     const result = await fetcher.post(
       'https://statsigapi.net/v1/test',
       { test: 123 },

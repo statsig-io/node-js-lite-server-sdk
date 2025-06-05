@@ -38,12 +38,15 @@ export type DiagnosticsSamplingRate = {
   initialize: number;
 };
 
+export const DEFAULT_API = 'https://statsigapi.net/v1';
+const DEFAULT_API_FOR_DOWNLOAD_CONFIG_SPECS = 'https://api.statsigcdn.com/v1';
+
 export type SDKConstants = DiagnosticsSamplingRate;
 
 export default class SpecStore {
   private initReason: EvaluationReason;
 
-  private api: string;
+  private api: string | null;
   private apiForDownloadConfigSpecs: string | null;
   private rulesUpdatedCallback: ((rules: string, time: number) => void) | null;
   private initialUpdateTime: number;
@@ -71,8 +74,10 @@ export default class SpecStore {
     initialize: MAX_SAMPLING_RATE,
   };
   private outputLogger = OutputLogger.getLogger();
+  private sdkKey: string;
 
   public constructor(
+    sdkKey: string,
     fetcher: StatsigFetcher,
     options: ExplicitStatsigOptions,
     diagnostics: Diagnostics,
@@ -102,6 +107,7 @@ export default class SpecStore {
     this.diagnostics = diagnostics;
     this.bootstrapValues = options.bootstrapValues;
     this.initStrategyForIDLists = options.initStrategyForIDLists;
+    this.sdkKey = sdkKey;
   }
 
   public getInitReason() {
@@ -277,12 +283,15 @@ export default class SpecStore {
     let response: Response | undefined = undefined;
     let error: Error | undefined = undefined;
     try {
+      const path =
+        '/download_config_specs' +
+        `/${this.sdkKey}.json` +
+        `?sinceTime=${this.lastUpdateTime}`;
       const url =
-        (this.apiForDownloadConfigSpecs ?? this.api) + '/download_config_specs';
-      response = await this.fetcher.post(url, {
-        statsigMetadata: getStatsigMetadata(),
-        sinceTime: this.lastUpdateTime,
-      });
+        (this.apiForDownloadConfigSpecs ??
+          this.api ??
+          DEFAULT_API_FOR_DOWNLOAD_CONFIG_SPECS) + path;
+      response = await this.fetcher.get(url);
     } catch (e) {
       error = e as Error;
     } finally {
@@ -634,9 +643,12 @@ export default class SpecStore {
     });
     let response = null;
     try {
-      response = await this.fetcher.post(this.api + '/get_id_lists', {
-        statsigMetadata: getStatsigMetadata(),
-      });
+      response = await this.fetcher.post(
+        (this.api ?? DEFAULT_API) + '/get_id_lists',
+        {
+          statsigMetadata: getStatsigMetadata(),
+        },
+      );
 
       this.addDiagnosticsMarker('get_id_list_sources', 'end', {
         step: 'network_request',

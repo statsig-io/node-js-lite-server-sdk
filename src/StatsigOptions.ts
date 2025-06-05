@@ -1,6 +1,5 @@
 import { IDataAdapter } from './interfaces/IDataAdapter';
 
-const DEFAULT_API = 'https://statsigapi.net/v1';
 const DEFAULT_RULESETS_SYNC_INTERVAL = 10 * 1000;
 const MIN_RULESETS_SYNC_INTERVAL = 5 * 1000;
 const DEFAULT_ID_LISTS_SYNC_INTERVAL = 60 * 1000;
@@ -27,7 +26,7 @@ export interface LoggerInterface {
 }
 
 export type ExplicitStatsigOptions = {
-  api: string;
+  api: string | null;
   apiForDownloadConfigSpecs: string | null;
   bootstrapValues: string | null;
   environment: StatsigEnvironment | null;
@@ -58,9 +57,7 @@ export function OptionsWithDefaults(
   opts: StatsigOptions,
 ): ExplicitStatsigOptions {
   return {
-    api: normalizeUrl(
-      getString(opts, 'api', DEFAULT_API) ?? DEFAULT_API,
-    ) as string,
+    api: normalizeUrl(getString(opts, 'api', null)),
     apiForDownloadConfigSpecs: normalizeUrl(
       getString(opts, 'apiForDownloadConfigSpecs', null),
     ),

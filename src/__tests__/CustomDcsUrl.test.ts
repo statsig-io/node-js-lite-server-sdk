@@ -8,7 +8,7 @@ const jsonResponse = {
   layer_configs: [],
   has_updates: true,
 };
-const dcsPath = '/download_config_specs';
+const dcsPath = '/download_config_specs/secret-123.json?sinceTime=0';
 const customUrl = 'custom_download_config_specs_url';
 
 describe('Check custom DCS url', () => {
@@ -19,7 +19,7 @@ describe('Check custom DCS url', () => {
 
   const spy = jest
     // @ts-ignore
-    .spyOn(statsigServer._fetcher, 'post')
+    .spyOn(statsigServer._fetcher, 'request')
     .mockImplementation(() => {
       return Promise.resolve(
         new Response(JSON.stringify(jsonResponse), { status: 200 }),
@@ -31,7 +31,14 @@ describe('Check custom DCS url', () => {
     statsigServer.logEvent({ userID: '42' }, 'test');
     await statsigServer.flush();
 
-    expect(spy).toHaveBeenCalledWith(customUrl + dcsPath, expect.anything());
+    expect(spy).toHaveBeenCalledWith(
+      'GET',
+      customUrl + dcsPath,
+      undefined,
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+    );
     expect(spy).not.toHaveBeenCalledWith(
       customUrl + '/get_id_lists',
       expect.anything(),

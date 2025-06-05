@@ -156,12 +156,13 @@ describe('Verify behavior of top level index functions', () => {
   });
 
   test('Verify internal components are initialized properly after initialize() is called with a secret Key', async () => {
-    expect.assertions(5);
+    expect.assertions(6);
     return Statsig.initialize(secretKey).then(() => {
       const inst = StatsigInstanceUtils.getInstance() as any;
       expect(inst._secretKey).toBe(secretKey);
       expect(StatsigTestUtils.getLogger()).toBeDefined();
-      expect(inst._options.api).toBe('https://statsigapi.net/v1');
+      expect(inst._options.api).toBe(null);
+      expect(inst._options.apiForDownloadConfigSpecs).toBe(null);
       expect(inst._ready).toBe(true);
       expect(StatsigTestUtils.getEvaluator().initialized).toBe(true);
     });
