@@ -283,10 +283,10 @@ export default class SpecStore {
     let response: Response | undefined = undefined;
     let error: Error | undefined = undefined;
     try {
-      const path =
-        '/download_config_specs' +
-        `/${this.sdkKey}.json` +
-        `?sinceTime=${this.lastUpdateTime}`;
+      let path = '/download_config_specs' + `/${this.sdkKey}.json`;
+      if (this.lastUpdateTime > 0) {
+        path += `?sinceTime=${this.lastUpdateTime}`;
+      }
       const url =
         (this.apiForDownloadConfigSpecs ??
           this.api ??

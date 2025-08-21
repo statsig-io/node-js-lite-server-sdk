@@ -8,7 +8,7 @@ const jsonResponse = {
   layer_configs: [],
   has_updates: true,
 };
-const dcsPath = '/download_config_specs/secret-123.json?sinceTime=0';
+const dcsPath = '/download_config_specs/secret-123.json';
 const customUrl = 'custom_download_config_specs_url';
 
 describe('Check custom DCS url', () => {
