@@ -23,6 +23,10 @@ const { getStatsigMetadata } = require('./utils/core');
 
 const SYNC_OUTDATED_MAX = 120 * 1000;
 
+function getDownloadConfigSpecsApi(api: string): string {
+  return api.replace(/\/v1$/, '/v2');
+}
+
 export type ConfigStore = {
   gates: Record<string, ConfigSpec>;
   configs: Record<string, ConfigSpec>;
@@ -39,7 +43,7 @@ export type DiagnosticsSamplingRate = {
 };
 
 export const DEFAULT_API = 'https://statsigapi.net/v1';
-const DEFAULT_API_FOR_DOWNLOAD_CONFIG_SPECS = 'https://api.statsigcdn.com/v1';
+const DEFAULT_API_FOR_DOWNLOAD_CONFIG_SPECS = 'https://api.statsigcdn.com/v2';
 
 export type SDKConstants = DiagnosticsSamplingRate;
 
@@ -287,10 +291,11 @@ export default class SpecStore {
       if (this.lastUpdateTime > 0) {
         path += `?sinceTime=${this.lastUpdateTime}`;
       }
-      const url =
-        (this.apiForDownloadConfigSpecs ??
-          this.api ??
-          DEFAULT_API_FOR_DOWNLOAD_CONFIG_SPECS) + path;
+      const api =
+        this.apiForDownloadConfigSpecs ??
+        this.api ??
+        DEFAULT_API_FOR_DOWNLOAD_CONFIG_SPECS;
+      const url = getDownloadConfigSpecsApi(api) + path;
       response = await this.fetcher.get(url);
     } catch (e) {
       error = e as Error;
