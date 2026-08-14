@@ -1,4 +1,10 @@
 // @ts-nocheck
+
+// The suite drives the network by mocking 'node-fetch', which safeFetch now loads only
+// when the runtime has no fetch of its own. Node 18+ has one, so hide it and keep those
+// mocks in charge. safeFetch.test.ts covers the global-fetch path on its own.
+globalThis.fetch = undefined;
+
 global.console = {
   log: console.log, // console.log are kept in tests for debugging
 
